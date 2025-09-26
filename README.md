@@ -1,36 +1,138 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kokzhiek Admin Panel
 
-## Getting Started
+Административная панель для управления регистрационными ключами и пользователями системы Kokzhiek.
 
-First, run the development server:
+## Возможности
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Управление ключами**: Создание регистрационных ключей для всех 6 ролей (admin, moderator, author, school, teacher, student)
+- **Массовое создание**: Создание множества ключей одновременно
+- **Управление школами**: Просмотр школ и их участников
+- **Иерархия пользователей**: Настройка связей Школа → Учитель → Ученик
+- **Просмотр пользователей**: Полный список всех зарегистрированных пользователей
+
+## Архитектура
+
+Next.js админка, которая использует основной backend API для управления ключами и прямое подключение к БД для школ/пользователей.
+
+```
+kokzhiek-backend/     - основной API (порт 3000)
+├── /api/admin/       - эндпоинты для админки
+└── /api/auth/        - аутентификация
+
+kokzhiek-admin/       - админка на Next.js (порт 3001)
+├── AuthWrapper       - компонент аутентификации
+├── ApiService        - работа с backend API
+└── Pages             - интерфейс администратора
+    ├── keys/         - управление ключами (через backend API)
+    ├── schools/      - управление школами (прямой доступ к БД)
+    └── users/        - управление пользователями (прямой доступ к БД)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Установка и запуск
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Установите зависимости:
+```bash
+npm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Скопируйте настройки окружения:
+```bash
+cp .env.example .env.local
+```
 
-## Learn More
+3. Настройте переменные в `.env.local`:
+```env
+# Backend API URL
+NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
 
-To learn more about Next.js, take a look at the following resources:
+# Admin credentials для входа в backend
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=your-admin-password
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Next.js settings
+NEXTAUTH_SECRET=your_secret_key
+NEXTAUTH_URL=http://localhost:3001
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Database для школ/пользователей (опционально)
+DATABASE_URL=your_neon_database_url
+```
 
-## Deploy on Vercel
+4. Запустите основной backend (в отдельном терминале):
+```bash
+cd ../kokzhiek-backend
+npm run dev  # запустится на порту 3000
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5. Запустите админку:
+```bash
+npm run dev  # запустится на порту 3001
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Админка будет доступна на http://localhost:3001
+
+## Использование
+
+### Создание ключей
+
+1. Перейдите в раздел "Управление ключами"
+2. Выберите роль для которой создать ключ
+3. Укажите количество ключей (1-1000)
+4. Опционально: описание, срок действия, префикс
+5. Нажмите "Создать ключи"
+
+### Управление школами
+
+1. Перейдите в раздел "Школы"
+2. Выберите школу для просмотра участников
+3. Назначайте учеников учителям через выпадающий список
+
+### Иерархия пользователей
+
+- **Школа** → видит всех учителей и учеников
+- **Учитель** → привязан к школе, видит своих учеников
+- **Ученик** → привязан к школе и может быть назначен учителю
+
+## API Endpoints
+
+### Backend API (используется для ключей)
+- `POST /api/admin/registration-keys` - создание одного ключа
+- `POST /api/admin/registration-keys/bulk` - массовое создание ключей
+- `GET /api/admin/registration-keys` - список всех ключей
+- `GET /api/admin/registration-keys/{keyCode}` - получить конкретный ключ
+- `DELETE /api/admin/registration-keys/{keyCode}` - удалить ключ
+- `POST /api/auth/login` - аутентификация
+
+### Adminка API (прямой доступ к БД)
+- `GET /api/schools` - список школ со статистикой
+- `GET /api/schools/[id]/users` - пользователи школы с иерархией
+- `GET /api/users` - все пользователи системы
+- `PUT /api/users` - обновление связи ученик-учитель
+
+## Структура БД
+
+Добавлено поле `teacher_id` в таблицу `users` для связи ученика с учителем.
+
+### Миграция
+
+В основном backend выполните:
+```bash
+npm run db:migrate
+```
+
+Это добавит поле `teacher_id uuid` в таблицу `users`.
+
+## Аутентификация
+
+Админка использует аутентификацию через основной backend:
+
+1. **Вход в систему**: Используйте существующего админ пользователя из основной системы
+2. **JWT токены**: Токен сохраняется в localStorage браузера
+3. **Автоматический logout**: При истечении токена или ошибке авторизации
+
+## Безопасность
+
+- Админка использует существующую систему аутентификации backend'а
+- JWT токены для безопасного доступа к API
+- Автоматическое перенаправление на логин при истечении сессии
+- Рекомендуется настроить HTTPS в продакшене
+- Не выставляйте админку в публичный доступ без дополнительной защиты
