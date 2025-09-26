@@ -1,10 +1,56 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+// Автоматическое определение backend URL в зависимости от окружения
+const getBackendUrl = () => {
+  // В продакшене (Vercel)
+  if (process.env.NODE_ENV === 'production') {
+    // Пытаемся использовать переменную окружения, если есть
+    if (process.env.NEXT_PUBLIC_BACKEND_URL && process.env.NEXT_PUBLIC_BACKEND_URL !== 'http://localhost:3000') {
+      return process.env.NEXT_PUBLIC_BACKEND_URL;
+    }
+    // Если нет валидного backend URL в продакшене, показываем ошибку
+    console.warn('⚠️ Backend URL не настроен для продакшена');
+    return null;
+  }
+
+  // В разработке используем localhost
+  return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+};
+
+const BACKEND_URL = getBackendUrl();
 
 // Temporary simple auth - in production should use proper JWT handling
 class ApiService {
   private static token: string | null = null;
 
+  // Универсальный метод для API вызовов с проверкой backend URL
+  private static async apiCall(endpoint: string, options: RequestInit = {}): Promise<Response> {
+    if (!BACKEND_URL) {
+      throw new Error('Backend не настроен. Обратитесь к администратору.');
+    }
+
+    const url = `${BACKEND_URL}${endpoint}`;
+    const defaultHeaders = {
+      'Content-Type': 'application/json',
+      ...(this.token && { 'Authorization': `Bearer ${this.token}` }),
+    };
+
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...defaultHeaders,
+        ...options.headers,
+      },
+    });
+  }
+
   static async login(email: string, password: string): Promise<{ success: boolean; token?: string; error?: string }> {
+    // Проверяем доступность backend URL
+    if (!BACKEND_URL) {
+      return {
+        success: false,
+        error: 'Backend не настроен. Обратитесь к администратору.'
+      };
+    }
+
     try {
       const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
         method: 'POST',
