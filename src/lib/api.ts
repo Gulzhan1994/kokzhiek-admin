@@ -198,6 +198,20 @@ class ApiService {
     return response.json();
   }
 
+  // Books API
+  static async getAllBooks(params: { page?: number; limit?: number; search?: string } = {}) {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.limit) searchParams.append('limit', params.limit.toString());
+    if (params.search) searchParams.append('search', params.search);
+
+    const query = searchParams.toString();
+    const endpoint = `/api/admin/books${query ? `?${query}` : ''}`;
+
+    const response = await this.makeRequest(endpoint);
+    return response.json();
+  }
+
   // Export Data API
   static async exportData(format: 'csv' | 'json' = 'csv', dataType: 'all' | 'keys' | 'schools' | 'users' = 'all') {
     const token = this.getToken();

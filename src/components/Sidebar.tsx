@@ -3,6 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from './AuthWrapper';
+import {
+  LayoutDashboard,
+  Key,
+  Building2,
+  BookOpen,
+  Search,
+  LogOut
+} from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,21 +24,33 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const menuItems = [
     {
       href: '/',
-      icon: '📊',
+      icon: LayoutDashboard,
       label: 'Дашборд',
       description: 'Общая статистика системы'
     },
     {
       href: '/keys',
-      icon: '🔑',
+      icon: Key,
       label: 'Ключи',
       description: 'Создание регистрационных ключей'
     },
     {
       href: '/schools',
-      icon: '🏫',
+      icon: Building2,
       label: 'Школы',
       description: 'Школы и статистика ключей'
+    },
+    {
+      href: '/books',
+      icon: BookOpen,
+      label: 'Книги',
+      description: 'Все книги и история изменений'
+    },
+    {
+      href: '/search',
+      icon: Search,
+      label: 'Поиск',
+      description: 'Поиск по книгам и контенту'
     }
   ];
 
@@ -72,28 +92,31 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           {/* Navigation */}
           <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-            {menuItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={`
-                  group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors
-                  ${isActive(item.href)
-                    ? 'bg-blue-100 text-blue-900 border-r-2 border-blue-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }
-                `}
-              >
-                <span className="mr-3 text-lg">{item.icon}</span>
-                <div className="flex-1">
-                  <div className="font-medium">{item.label}</div>
-                  <div className="text-xs text-gray-500 group-hover:text-gray-600">
-                    {item.description}
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClose}
+                  className={`
+                    group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors
+                    ${isActive(item.href)
+                      ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
+                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }
+                  `}
+                >
+                  <Icon className="mr-3 w-5 h-5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-medium">{item.label}</div>
+                    <div className="text-xs text-gray-500 group-hover:text-gray-600">
+                      {item.description}
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Footer */}
@@ -102,7 +125,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               onClick={logout}
               className="w-full flex items-center px-2 py-2 text-sm font-medium text-red-600 rounded-md hover:bg-red-50 transition-colors"
             >
-              <span className="mr-3 text-lg">🚪</span>
+              <LogOut className="mr-3 w-5 h-5 flex-shrink-0" />
               <span>Выход</span>
             </button>
           </div>

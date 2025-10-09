@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AuthWrapper, { useAuth } from '@/components/AuthWrapper';
 import ApiService from '@/lib/api';
+import StatsCard from '@/components/StatsCard';
+import { Key, CheckCircle, Building2, Users, TrendingUp, Calendar, Download } from 'lucide-react';
 
 interface DashboardStats {
   totalKeys: number;
@@ -75,112 +77,67 @@ function AdminPanel() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <span className="text-2xl">🔑</span>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Всего ключей
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {loading ? '-' : stats?.totalKeys || 0}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <span className="text-2xl">✅</span>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Использованных
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {loading ? '-' : stats?.usedKeys || 0}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatsCard
+            title="Всего ключей"
+            value={stats?.totalKeys || 0}
+            icon={Key}
+            color="blue"
+          />
+          <StatsCard
+            title="Использованных"
+            value={stats?.usedKeys || 0}
+            icon={CheckCircle}
+            color="green"
+          />
+          <StatsCard
+            title="Школ"
+            value={stats?.totalSchools || 0}
+            icon={Building2}
+            color="purple"
+          />
+          <StatsCard
+            title="Пользователей"
+            value={stats?.totalUsers || 0}
+            subtitle={`Активных: ${stats?.activeUsers || 0}`}
+            icon={Users}
+            color="orange"
+          />
         </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <span className="text-2xl">🏫</span>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Школ
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {loading ? '-' : stats?.totalSchools || 0}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <span className="text-2xl">👥</span>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Пользователей
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {loading ? '-' : stats?.totalUsers || 0}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Quick Actions */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+      <div className="bg-white shadow rounded-lg border border-gray-200">
+        <div className="px-6 py-5">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Быстрые действия
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
               href="/keys"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
+              className="flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
             >
-              🔑 Создать ключи
+              <Key className="w-5 h-5" />
+              <span>Создать ключи</span>
             </Link>
             <Link
               href="/schools"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200"
+              className="flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-50 hover:bg-green-100 transition-colors"
             >
-              🏫 Посмотреть школы
+              <Building2 className="w-5 h-5" />
+              <span>Посмотреть школы</span>
             </Link>
             <button
               onClick={handleExportData}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200"
+              className="flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-50 hover:bg-gray-100 transition-colors"
             >
-              📊 Экспорт данных
+              <Download className="w-5 h-5" />
+              <span>Экспорт данных</span>
             </button>
           </div>
         </div>
