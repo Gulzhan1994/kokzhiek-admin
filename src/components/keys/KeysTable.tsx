@@ -1,8 +1,9 @@
+'use client';
+
 import React from 'react';
 import { Trash2, Copy, Eye, CheckCircle, XCircle, Clock } from 'lucide-react';
-import type { RegistrationKey } from '../types';
+import type { RegistrationKey } from '@/types/registrationKey';
 import { format } from 'date-fns';
-import { useLanguage } from '../../../hooks/useLanguage';
 
 interface KeysTableProps {
   keys: RegistrationKey[];
@@ -15,39 +16,39 @@ interface KeysTableProps {
 const getStatusIcon = (key: RegistrationKey) => {
   const now = new Date();
   const expiresAt = key.expiresAt ? new Date(key.expiresAt) : null;
-  
+
   if (!key.isActive) {
     return <XCircle className="w-4 h-4 text-gray-500" />;
   }
-  
+
   if (expiresAt && expiresAt < now) {
     return <Clock className="w-4 h-4 text-red-500" />;
   }
-  
+
   if (key.maxUses && key.usedCount >= key.maxUses) {
     return <XCircle className="w-4 h-4 text-orange-500" />;
   }
-  
+
   return <CheckCircle className="w-4 h-4 text-green-500" />;
 };
 
-const getStatusText = (key: RegistrationKey, t: any): { text: string; color: string } => {
+const getStatusText = (key: RegistrationKey): { text: string; color: string } => {
   const now = new Date();
   const expiresAt = key.expiresAt ? new Date(key.expiresAt) : null;
 
   if (!key.isActive) {
-    return { text: t('admin.table.status.inactive'), color: 'text-gray-600' };
+    return { text: 'Неактивен', color: 'text-gray-600' };
   }
 
   if (expiresAt && expiresAt < now) {
-    return { text: t('admin.table.status.expired'), color: 'text-red-600' };
+    return { text: 'Истёк', color: 'text-red-600' };
   }
 
   if (key.maxUses && key.usedCount >= key.maxUses) {
-    return { text: t('admin.table.status.exhausted'), color: 'text-orange-600' };
+    return { text: 'Исчерпан', color: 'text-orange-600' };
   }
 
-  return { text: t('admin.table.status.active'), color: 'text-green-600' };
+  return { text: 'Активен', color: 'text-green-600' };
 };
 
 const getRoleBadgeColor = (role: string) => {
@@ -62,16 +63,16 @@ const getRoleBadgeColor = (role: string) => {
   return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800';
 };
 
-const getRoleDisplayName = (role: string, t: any) => {
+const getRoleDisplayName = (role: string) => {
   const roleMap = {
-    admin: 'admin.table.roles.admin',
-    author: 'admin.table.roles.author',
-    teacher: 'admin.table.roles.teacher',
-    student: 'admin.table.roles.student',
-    school: 'admin.table.roles.school',
-    moderator: 'admin.table.roles.moderator'
+    admin: 'Администратор',
+    author: 'Автор',
+    teacher: 'Учитель',
+    student: 'Ученик',
+    school: 'Школа',
+    moderator: 'Модератор'
   };
-  return t(roleMap[role as keyof typeof roleMap] || 'admin.table.roles.student');
+  return roleMap[role as keyof typeof roleMap] || 'Ученик';
 };
 
 export const KeysTable: React.FC<KeysTableProps> = ({
@@ -81,7 +82,6 @@ export const KeysTable: React.FC<KeysTableProps> = ({
   onCopyKey,
   loading
 }) => {
-  const { t } = useLanguage();
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -93,7 +93,7 @@ export const KeysTable: React.FC<KeysTableProps> = ({
   if (keys.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
-        {t('admin.table.noKeysFound')}
+        Ключи не найдены
       </div>
     );
   }
@@ -104,31 +104,31 @@ export const KeysTable: React.FC<KeysTableProps> = ({
         <thead className="bg-gray-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {t('admin.table.keyCode')}
+              Код ключа
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {t('admin.table.role')}
+              Роль
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {t('admin.table.description')}
+              Описание
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {t('admin.table.uses')}
+              Использований
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {t('admin.table.status')}
+              Статус
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {t('admin.table.expires')}
+              Срок действия
             </th>
             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              {t('admin.table.actions')}
+              Действия
             </th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {keys.map((key) => {
-            const status = getStatusText(key, t);
+            const status = getStatusText(key);
             return (
               <tr key={key.keyCode} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -139,7 +139,7 @@ export const KeysTable: React.FC<KeysTableProps> = ({
                     <button
                       onClick={() => onCopyKey(key.keyCode)}
                       className="text-gray-400 hover:text-gray-600"
-                      title={t('admin.table.copyKey')}
+                      title="Копировать ключ"
                     >
                       <Copy className="w-4 h-4" />
                     </button>
@@ -147,14 +147,14 @@ export const KeysTable: React.FC<KeysTableProps> = ({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(key.role)}`}>
-                    {getRoleDisplayName(key.role, t)}
+                    {getRoleDisplayName(key.role)}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
                   {key.description}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {key.maxUses || ''}
+                  {key.maxUses || '∞'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center space-x-1">
@@ -165,21 +165,21 @@ export const KeysTable: React.FC<KeysTableProps> = ({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {key.expiresAt ? format(new Date(key.expiresAt), 'MMM d, yyyy') : t('admin.table.never')}
+                  {key.expiresAt ? format(new Date(key.expiresAt), 'MMM d, yyyy') : 'Бессрочно'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end space-x-2">
                     <button
                       onClick={() => onViewDetails(key.keyCode)}
                       className="text-blue-600 hover:text-blue-900"
-                      title={t('admin.table.viewDetails')}
+                      title="Просмотр деталей"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => onDelete(key.keyCode)}
                       className="text-red-600 hover:text-red-900"
-                      title={t('admin.table.delete')}
+                      title="Удалить"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

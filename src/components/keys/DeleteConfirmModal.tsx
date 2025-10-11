@@ -1,6 +1,7 @@
+'use client';
+
 import React, { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
-import { useLanguage } from '../../../hooks/useLanguage';
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
@@ -15,7 +16,6 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   onClose,
   onConfirm
 }) => {
-  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
 
   const handleConfirm = async () => {
@@ -40,7 +40,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center space-x-2">
             <AlertTriangle className="w-6 h-6 text-red-500" />
-            <h2 className="text-xl font-bold text-gray-900">{t('admin.modal.deleteConfirm.title')}</h2>
+            <h2 className="text-xl font-bold text-gray-900">Подтвердите удаление</h2>
           </div>
           <button
             onClick={onClose}
@@ -53,12 +53,12 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
 
         <div className="mb-6">
           <p className="text-gray-700 mb-4">
-            {t('admin.modal.deleteConfirm.message')}
+            Вы уверены, что хотите удалить этот ключ регистрации? Это действие необратимо.
           </p>
 
           <div className="bg-gray-50 rounded-lg p-3">
             <div className="text-sm text-gray-600 mb-1">
-              {t('admin.modal.deleteConfirm.keyCode')}:
+              Код ключа:
             </div>
             <code className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
               {keyCode}
@@ -73,7 +73,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
             className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
             disabled={loading}
           >
-            {t('admin.modal.deleteConfirm.cancel')}
+            Отмена
           </button>
           <button
             onClick={handleConfirm}
@@ -83,10 +83,10 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>{t('admin.modal.deleteConfirm.deleting')}</span>
+                <span>Удаление...</span>
               </>
             ) : (
-              <span>{t('admin.modal.deleteConfirm.delete')}</span>
+              <span>Удалить</span>
             )}
           </button>
         </div>
