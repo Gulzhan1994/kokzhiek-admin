@@ -5,7 +5,7 @@ import Link from 'next/link';
 import AuthWrapper, { useAuth } from '@/components/AuthWrapper';
 import ApiService from '@/lib/api';
 import StatsCard from '@/components/StatsCard';
-import { Key, CheckCircle, Building2, Users, TrendingUp, Calendar, Download } from 'lucide-react';
+import { Key, CheckCircle, Building2, Users, TrendingUp, Calendar, Download, History } from 'lucide-react';
 
 interface DashboardStats {
   totalKeys: number;
@@ -117,7 +117,7 @@ function AdminPanel() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Быстрые действия
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
               href="/keys"
               className="flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
@@ -131,6 +131,13 @@ function AdminPanel() {
             >
               <Building2 className="w-5 h-5" />
               <span>Посмотреть школы</span>
+            </Link>
+            <Link
+              href="/history"
+              className="flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors"
+            >
+              <History className="w-5 h-5" />
+              <span>История изменений</span>
             </Link>
             <button
               onClick={handleExportData}

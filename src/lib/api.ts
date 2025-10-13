@@ -235,6 +235,86 @@ class ApiService {
     return response;
   }
 
+  // Audit Logs API
+  static async getAuditLogs(params: {
+    page?: number;
+    limit?: number;
+    userId?: string;
+    action?: string;
+    entityType?: string;
+    entityId?: string;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+  } = {}) {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.limit) searchParams.append('limit', params.limit.toString());
+    if (params.userId) searchParams.append('userId', params.userId);
+    if (params.action) searchParams.append('action', params.action);
+    if (params.entityType) searchParams.append('entityType', params.entityType);
+    if (params.entityId) searchParams.append('entityId', params.entityId);
+    if (params.search) searchParams.append('search', params.search);
+    if (params.startDate) searchParams.append('startDate', params.startDate);
+    if (params.endDate) searchParams.append('endDate', params.endDate);
+
+    const query = searchParams.toString();
+    const endpoint = `/api/audit/logs${query ? `?${query}` : ''}`;
+
+    const response = await this.makeRequest(endpoint);
+    return response.json();
+  }
+
+  static async getAuditStats(params: { startDate?: string; endDate?: string } = {}) {
+    const searchParams = new URLSearchParams();
+    if (params.startDate) searchParams.append('startDate', params.startDate);
+    if (params.endDate) searchParams.append('endDate', params.endDate);
+
+    const query = searchParams.toString();
+    const endpoint = `/api/audit/stats${query ? `?${query}` : ''}`;
+
+    const response = await this.makeRequest(endpoint);
+    return response.json();
+  }
+
+  static async exportAuditLogs(params: {
+    userId?: string;
+    action?: string;
+    entityType?: string;
+    entityId?: string;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+  } = {}) {
+    const searchParams = new URLSearchParams();
+    if (params.userId) searchParams.append('userId', params.userId);
+    if (params.action) searchParams.append('action', params.action);
+    if (params.entityType) searchParams.append('entityType', params.entityType);
+    if (params.entityId) searchParams.append('entityId', params.entityId);
+    if (params.search) searchParams.append('search', params.search);
+    if (params.startDate) searchParams.append('startDate', params.startDate);
+    if (params.endDate) searchParams.append('endDate', params.endDate);
+
+    const token = this.getToken();
+    const query = searchParams.toString();
+    const response = await fetch(`${BACKEND_URL}/api/audit/export${query ? `?${query}` : ''}`, {
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+    });
+
+    if (response.status === 401) {
+      this.logout();
+      throw new Error('Authentication required');
+    }
+
+    if (!response.ok) {
+      throw new Error('Export failed');
+    }
+
+    return response;
+  }
+
 }
 
 export default ApiService;
