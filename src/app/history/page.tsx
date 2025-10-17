@@ -14,12 +14,12 @@ interface AuditLog {
   entityId: string | null;
   description: string;
   extraData?: {
-    oldValue?: any;
-    newValue?: any;
+    oldValue?: unknown;
+    newValue?: unknown;
     changes?: Array<{
       field: string;
-      oldValue: any;
-      newValue: any;
+      oldValue: unknown;
+      newValue: unknown;
     }>;
   };
   ipAddress: string | null;
@@ -68,6 +68,7 @@ export default function AuditHistoryPage() {
 
   useEffect(() => {
     fetchLogs();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, limit]);
 
   const fetchLogs = async () => {
