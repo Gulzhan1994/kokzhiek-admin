@@ -199,11 +199,23 @@ class ApiService {
   }
 
   // Books API
-  static async getAllBooks(params: { page?: number; limit?: number; search?: string } = {}) {
+  static async getAllBooks(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: string;
+    ownerId?: string;
+    isPublic?: boolean;
+  } = {}) {
     const searchParams = new URLSearchParams();
     if (params.page) searchParams.append('page', params.page.toString());
     if (params.limit) searchParams.append('limit', params.limit.toString());
     if (params.search) searchParams.append('search', params.search);
+    if (params.sortBy) searchParams.append('sortBy', params.sortBy);
+    if (params.sortOrder) searchParams.append('sortOrder', params.sortOrder);
+    if (params.ownerId) searchParams.append('ownerId', params.ownerId);
+    if (params.isPublic !== undefined) searchParams.append('isPublic', params.isPublic.toString());
 
     const query = searchParams.toString();
     const endpoint = `/api/admin/books${query ? `?${query}` : ''}`;
