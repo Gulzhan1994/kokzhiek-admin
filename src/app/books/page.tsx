@@ -20,6 +20,15 @@ interface Book {
   ownerEmail: string;
   lastEditorEmail: string | null;
   chaptersCount: number;
+  lastAuditExtraData?: {
+    oldValue?: any;
+    newValue?: any;
+    changes?: Array<{
+      field: string;
+      oldValue: any;
+      newValue: any;
+    }>;
+  };
 }
 
 interface BooksResponse {
@@ -141,6 +150,39 @@ export default function BooksPage() {
       'updated_book': 'Обновлена книга',
     };
     return translations[action] || action;
+  };
+
+  const translateFieldName = (fieldName: string): string => {
+    const translations: Record<string, string> = {
+      title: 'Название',
+      description: 'Описание',
+      author: 'Автор',
+      authors: 'Авторы',
+      grade: 'Класс',
+      class: 'Класс',
+      coverImageUrl: 'Обложка',
+      isPublic: 'Публичность',
+      visibility: 'Видимость',
+      isbn: 'ISBN',
+      year: 'Год издания',
+      publisher: 'Издательство',
+      edition: 'Издание',
+      subject: 'Предмет',
+      language: 'Язык',
+      schoolId: 'Школа',
+      ownerId: 'Владелец',
+    };
+    return translations[fieldName] || fieldName;
+  };
+
+  const formatValue = (value: any): string => {
+    if (value === null || value === undefined) return '—';
+    if (typeof value === 'boolean') return value ? 'Да' : 'Нет';
+    if (Array.isArray(value)) {
+      return value.length === 0 ? '—' : value.join(', ');
+    }
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -695,6 +737,50 @@ export default function BooksPage() {
                             <p className="text-base text-gray-900">{selectedBook.lastEditorEmail}</p>
                           </div>
                         </>
+                      )}
+
+                      {/* Детальные изменения */}
+                      {selectedBook.lastAuditExtraData?.changes && selectedBook.lastAuditExtraData.changes.length > 0 && (
+                        <div className="mt-4 border-t pt-4">
+                          <h4 className="text-md font-semibold text-gray-700 mb-3">Детальные изменения:</h4>
+                          <div className="space-y-3">
+                            {selectedBook.lastAuditExtraData.changes
+                              .filter((change) => {
+                                // Показываем только поля где значения действительно изменились
+                                const oldFormatted = formatValue(change.oldValue);
+                                const newFormatted = formatValue(change.newValue);
+                                return oldFormatted !== newFormatted;
+                              })
+                              .map((change, index) => {
+                                const isImageField = change.field === 'coverImageUrl';
+                                const oldFormatted = formatValue(change.oldValue);
+                                const newFormatted = formatValue(change.newValue);
+
+                                return (
+                                  <div key={index} className="bg-gray-50 p-3 rounded-md border border-gray-200">
+                                    <div className="flex items-start gap-2">
+                                      <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded">
+                                        {translateFieldName(change.field)}
+                                      </span>
+                                    </div>
+                                    {isImageField ? (
+                                      <div className="mt-2">
+                                        <p className="text-sm text-gray-600">Изменена</p>
+                                      </div>
+                                    ) : (
+                                      <div className="mt-2">
+                                        <p className="text-sm text-gray-700">
+                                          <span className="text-red-600">{oldFormatted}</span>
+                                          {' → '}
+                                          <span className="text-green-600">{newFormatted}</span>
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
