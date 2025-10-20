@@ -70,6 +70,12 @@ export default function BooksPage() {
     type: 'info',
   });
 
+  // Для поиска в логах
+  const [searchLogsModalOpen, setSearchLogsModalOpen] = useState(false);
+  const [searchLogsQuery, setSearchLogsQuery] = useState('');
+  const [searchLogsResults, setSearchLogsResults] = useState<any[]>([]);
+  const [searchLogsLoading, setSearchLogsLoading] = useState(false);
+
   const fetchBooks = useCallback(async (silentRefresh = false) => {
     try {
       // Показываем индикатор загрузки только если это не фоновое обновление
@@ -218,6 +224,83 @@ export default function BooksPage() {
     setCurrentPage(1);
   };
 
+  // Обработчик экспорта логов
+  const handleExportLogs = async () => {
+    try {
+      const token = localStorage.getItem('admin_token');
+
+      if (!token) {
+        showModal('Ошибка', 'Необходима авторизация', 'error');
+        return;
+      }
+
+      const response = await fetch('http://localhost:3000/api/admin/audit-logs/export?format=csv', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка экспорта логов');
+      }
+
+      const csvData = await response.text();
+      const blob = new Blob([csvData], { type: 'text/csv; charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      showModal('Успех', 'Логи успешно экспортированы', 'success');
+    } catch (error) {
+      console.error('Error exporting logs:', error);
+      showModal('Ошибка', 'Не удалось экспортировать логи', 'error');
+    }
+  };
+
+  // Обработчик поиска логов
+  const handleSearchLogs = async () => {
+    if (!searchLogsQuery.trim()) {
+      showModal('Внимание', 'Введите поисковый запрос', 'warning');
+      return;
+    }
+
+    setSearchLogsLoading(true);
+    try {
+      const token = localStorage.getItem('admin_token');
+
+      if (!token) {
+        showModal('Ошибка', 'Необходима авторизация', 'error');
+        setSearchLogsLoading(false);
+        return;
+      }
+
+      const url = `http://localhost:3000/api/admin/audit-logs/search?query=${encodeURIComponent(searchLogsQuery)}`;
+
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка поиска логов');
+      }
+
+      const data = await response.json();
+      setSearchLogsResults(data.data.logs);
+    } catch (error) {
+      console.error('Error searching logs:', error);
+      showModal('Ошибка', 'Не удалось выполнить поиск', 'error');
+    } finally {
+      setSearchLogsLoading(false);
+    }
+  };
+
   if (loading && books.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 py-12">
@@ -289,6 +372,31 @@ export default function BooksPage() {
           <div className="bg-white p-4 rounded-lg shadow text-center">
             <h3 className="text-sm font-medium text-gray-700 mb-1">Показано</h3>
             <p className="text-2xl font-bold text-green-600">{books.length}</p>
+          </div>
+        </div>
+
+        {/* Кнопки для работы с логами */}
+        <div className="bg-white rounded-lg shadow mb-6 p-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Управление логами</h3>
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={handleExportLogs}
+              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Экспортировать логи
+            </button>
+            <button
+              onClick={() => setSearchLogsModalOpen(true)}
+              className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              Поиск в логах
+            </button>
           </div>
         </div>
 
@@ -789,6 +897,131 @@ export default function BooksPage() {
                 <div className="mt-6 flex justify-end">
                   <button
                     onClick={closeBookModal}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                  >
+                    Закрыть
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Search Logs Modal */}
+        {searchLogsModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Поиск в логах
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setSearchLogsModalOpen(false);
+                      setSearchLogsQuery('');
+                      setSearchLogsResults([]);
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Search Input */}
+                <div className="mb-6">
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      value={searchLogsQuery}
+                      onChange={(e) => setSearchLogsQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSearchLogs();
+                        }
+                      }}
+                      placeholder="Введите поисковый запрос (например: 'название', 'класс')..."
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      disabled={searchLogsLoading}
+                    />
+                    <button
+                      onClick={handleSearchLogs}
+                      disabled={searchLogsLoading}
+                      className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {searchLogsLoading ? 'Поиск...' : 'Найти'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Search Results */}
+                {searchLogsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-green-500 border-t-transparent"></div>
+                    <p className="mt-2 text-gray-600">Поиск...</p>
+                  </div>
+                ) : searchLogsResults.length > 0 ? (
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                      Найдено результатов: {searchLogsResults.length}
+                    </h3>
+                    {searchLogsResults.map((log: any) => (
+                      <div key={log.id} className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded">
+                                {log.action}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                {log.entityType}
+                              </span>
+                            </div>
+                            <p className="text-base font-medium text-gray-900 mb-1">
+                              {log.entityName || log.entityId}
+                            </p>
+                            <p className="text-sm text-gray-700">
+                              {log.description}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-2 pt-2 border-t border-gray-200">
+                          <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                            <div>
+                              <span className="font-medium">Пользователь:</span> {log.userEmail}
+                            </div>
+                            <div>
+                              <span className="font-medium">Дата:</span> {formatDate(log.createdAt)}
+                            </div>
+                            {log.ipAddress && (
+                              <div>
+                                <span className="font-medium">IP:</span> {log.ipAddress}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : searchLogsQuery && !searchLogsLoading ? (
+                  <div className="text-center py-8 text-gray-500">
+                    Ничего не найдено
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    Введите запрос для поиска в логах
+                  </div>
+                )}
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => {
+                      setSearchLogsModalOpen(false);
+                      setSearchLogsQuery('');
+                      setSearchLogsResults([]);
+                    }}
                     className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
                   >
                     Закрыть
