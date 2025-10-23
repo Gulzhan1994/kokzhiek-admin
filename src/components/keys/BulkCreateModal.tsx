@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import type { BulkCreateData, RegistrationKey } from '@/types/registrationKey';
+import { SpellCheckInput } from '../SpellCheckInput';
 
 interface BulkCreateModalProps {
   isOpen: boolean;
@@ -110,16 +111,13 @@ export const BulkCreateModal: React.FC<BulkCreateModalProps> = ({
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Описание <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
+                <SpellCheckInput
+                  label="Описание"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Описание ключей"
                   required
+                  lang="ru"
                 />
               </div>
 
@@ -138,16 +136,18 @@ export const BulkCreateModal: React.FC<BulkCreateModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Префикс ключа <span className="text-gray-400 text-xs">(необязательно)</span>
                 </label>
                 <input
                   type="text"
                   value={formData.keyPrefix}
                   onChange={(e) => setFormData({ ...formData, keyPrefix: e.target.value.toUpperCase() })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Например: SUMMER2024"
                   maxLength={10}
+                  spellCheck={true}
+                  lang="en"
                 />
               </div>
 

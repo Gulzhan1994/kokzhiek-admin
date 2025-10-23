@@ -22,8 +22,10 @@ export function SpellCheckInput({
       )}
       <input
         {...props}
-        spellCheck={true}
+        spellCheck="true"
         lang={lang}
+        autoComplete="off"
+        autoCorrect="on"
         className={`w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
           error ? 'border-red-500' : ''
         } ${className}`}
@@ -57,8 +59,10 @@ export function SpellCheckTextarea({
       )}
       <textarea
         {...props}
-        spellCheck={true}
+        spellCheck="true"
         lang={lang}
+        autoComplete="off"
+        autoCorrect="on"
         className={`w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
           error ? 'border-red-500' : ''
         } ${className}`}

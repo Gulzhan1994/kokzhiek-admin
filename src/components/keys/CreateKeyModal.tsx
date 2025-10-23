@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import type { CreateKeyData } from '@/types/registrationKey';
+import { SpellCheckInput } from '../SpellCheckInput';
 
 interface CreateKeyModalProps {
   isOpen: boolean;
@@ -85,16 +86,13 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Описание <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
+              <SpellCheckInput
+                label="Описание"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Например: Ключ для 10А класса"
                 required
+                lang="ru"
               />
             </div>
 
