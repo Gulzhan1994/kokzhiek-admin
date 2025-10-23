@@ -271,7 +271,7 @@ class ApiService {
     if (params.endDate) searchParams.append('endDate', params.endDate);
 
     const query = searchParams.toString();
-    const endpoint = `/api/audit/logs${query ? `?${query}` : ''}`;
+    const endpoint = `/api/admin/audit-logs${query ? `?${query}` : ''}`;
 
     const response = await this.makeRequest(endpoint);
     return response.json();

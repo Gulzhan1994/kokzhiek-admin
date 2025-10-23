@@ -9,6 +9,7 @@ import {
   Building2,
   BookOpen,
   Search,
+  FileText,
   LogOut
 } from 'lucide-react';
 
@@ -45,6 +46,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: BookOpen,
       label: 'Книги',
       description: 'Все книги и история изменений'
+    },
+    {
+      href: '/audit-logs',
+      icon: FileText,
+      label: 'История изменений',
+      description: 'Журнал всех изменений системы'
     },
     {
       href: '/search',
