@@ -208,11 +208,11 @@ function AdminPanel() {
               <span>Посмотреть школы</span>
             </Link>
             <Link
-              href="/books"
+              href="/audit-logs"
               className="flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors"
             >
               <History className="w-5 h-5" />
-              <span>История изменений книг</span>
+              <span>История изменений</span>
             </Link>
             <button
               onClick={() => setHistoryPanelOpen(true)}
