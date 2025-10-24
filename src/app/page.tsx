@@ -6,6 +6,7 @@ import AuthWrapper, { useAuth } from '@/components/AuthWrapper';
 import ApiService from '@/lib/api';
 import StatsCard from '@/components/StatsCard';
 import { AdminHistoryPanel } from '@/components/AdminHistoryPanel';
+import { ExportProgressModal } from '@/components/ExportProgressModal';
 import { Key, CheckCircle, Building2, Users, TrendingUp, Calendar, Download, History, Undo2 } from 'lucide-react';
 
 interface DashboardStats {
@@ -21,6 +22,11 @@ function AdminPanel() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
+  const [exportProgress, setExportProgress] = useState<{
+    isExporting: boolean;
+    progress: number;
+    status: string;
+  }>({ isExporting: false, progress: 0, status: '' });
 
   useEffect(() => {
     fetchStats();
@@ -49,10 +55,52 @@ function AdminPanel() {
 
   const handleExportData = async () => {
     try {
+      setExportProgress({ isExporting: true, progress: 0, status: 'Подготовка экспорта...' });
+
       const response = await ApiService.exportData('csv', 'all');
 
-      // Create download
-      const blob = await response.blob();
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Ошибка экспорта: ${response.status} ${response.statusText}`);
+      }
+
+      // Get content length for progress calculation
+      const contentLength = response.headers.get('content-length');
+      const total = contentLength ? parseInt(contentLength, 10) : 0;
+
+      setExportProgress({ isExporting: true, progress: 10, status: 'Загрузка данных...' });
+
+      // Read response as stream to track progress
+      const reader = response.body?.getReader();
+      const chunks: Uint8Array[] = [];
+      let receivedLength = 0;
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) break;
+
+          chunks.push(value);
+          receivedLength += value.length;
+
+          // Calculate progress (reserve last 10% for file creation)
+          const downloadProgress = total > 0
+            ? Math.min(90, Math.floor((receivedLength / total) * 90))
+            : Math.min(90, 10 + Math.floor(receivedLength / 10000));
+
+          setExportProgress({
+            isExporting: true,
+            progress: downloadProgress,
+            status: `Загружено ${(receivedLength / 1024 / 1024).toFixed(2)} МБ...`
+          });
+        }
+      }
+
+      setExportProgress({ isExporting: true, progress: 95, status: 'Создание файла...' });
+
+      // Combine chunks into blob
+      const blob = new Blob(chunks as BlobPart[]);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
@@ -60,15 +108,40 @@ function AdminPanel() {
       a.download = `kokzhiek_export_${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+
+      setExportProgress({ isExporting: true, progress: 100, status: 'Экспорт завершен!' });
+
+      // Clean up
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setExportProgress({ isExporting: false, progress: 0, status: '' });
+      }, 2000);
+
     } catch (error) {
       console.error('Error exporting data:', error);
-      if (error instanceof Error && error.message === 'Authentication required') {
-        logout();
-      } else {
-        alert('Ошибка при экспорте данных');
+
+      let errorMessage = 'Ошибка при экспорте данных';
+
+      if (error instanceof Error) {
+        if (error.message === 'Authentication required') {
+          logout();
+          return;
+        }
+        errorMessage = error.message;
       }
+
+      // Показать ошибку в модальном окне на 3 секунды
+      setExportProgress({
+        isExporting: true,
+        progress: 0,
+        status: `❌ ${errorMessage}`
+      });
+
+      setTimeout(() => {
+        setExportProgress({ isExporting: false, progress: 0, status: '' });
+        alert(errorMessage);
+      }, 3000);
     }
   };
   return (
@@ -167,6 +240,14 @@ function AdminPanel() {
           // Обновляем статистику после отмены действия
           fetchStats();
         }}
+      />
+
+      {/* Export Progress Modal */}
+      <ExportProgressModal
+        isOpen={exportProgress.isExporting}
+        progress={exportProgress.progress}
+        status={exportProgress.status}
+        onClose={() => setExportProgress({ isExporting: false, progress: 0, status: '' })}
       />
     </div>
   );
