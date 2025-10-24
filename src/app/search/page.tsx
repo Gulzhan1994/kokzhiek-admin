@@ -15,6 +15,7 @@ interface SearchResult {
   bookTitle?: string;
   chapterId?: string;
   chapterTitle?: string;
+  blockType?: string;
   textSnippet?: string;
   matchedIn?: string[];
   createdAt: string;
@@ -66,7 +67,6 @@ export default function SearchPage() {
         setError(data.error?.message || 'Ошибка поиска');
       }
     } catch (error) {
-      console.error('Search error:', error);
       setError('Ошибка подключения к серверу');
     } finally {
       setLoading(false);
@@ -79,6 +79,15 @@ export default function SearchPage() {
       month: 'short',
       day: 'numeric',
     });
+  };
+
+  const translateFieldName = (field: string): string => {
+    const translations: Record<string, string> = {
+      'title': 'название',
+      'description': 'описание',
+      'author': 'автор',
+    };
+    return translations[field] || field;
   };
 
   return (
@@ -213,7 +222,7 @@ export default function SearchPage() {
                         <span>Создана: {formatDate(book.createdAt)}</span>
                         {book.matchedIn && book.matchedIn.length > 0 && (
                           <span className="text-blue-600 font-medium">
-                            Совпадения в: {book.matchedIn.join(', ')}
+                            Совпадения в: {book.matchedIn.map(translateFieldName).join(', ')}
                           </span>
                         )}
                       </div>
@@ -241,7 +250,7 @@ export default function SearchPage() {
                         <span>Создана: {formatDate(chapter.createdAt)}</span>
                         {chapter.matchedIn && chapter.matchedIn.length > 0 && (
                           <span className="text-blue-600 font-medium">
-                            Совпадения в: {chapter.matchedIn.join(', ')}
+                            Совпадения в: {chapter.matchedIn.map(translateFieldName).join(', ')}
                           </span>
                         )}
                       </div>
