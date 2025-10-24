@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, Replace, X, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import { Search, Replace, X, AlertCircle, CheckCircle, Loader, AlertTriangle } from 'lucide-react';
 
 interface FindReplaceResult {
   bookId: string;
@@ -32,6 +32,7 @@ export function FindReplaceModal({ isOpen, onClose, onComplete }: FindReplaceMod
   const [replaceResults, setReplaceResults] = useState<FindReplaceResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Очистка состояния при закрытии
   useEffect(() => {
@@ -97,7 +98,7 @@ export function FindReplaceModal({ isOpen, onClose, onComplete }: FindReplaceMod
     }
   };
 
-  const handleReplace = async () => {
+  const handleReplaceAll = () => {
     if (!findText.trim()) {
       setError('Введите текст для поиска');
       return;
@@ -108,10 +109,12 @@ export function FindReplaceModal({ isOpen, onClose, onComplete }: FindReplaceMod
       return;
     }
 
-    if (!confirm(`Вы уверены, что хотите заменить "${findText}" на "${replaceText}"?\n\nЭто действие нельзя будет отменить.`)) {
-      return;
-    }
+    // Показываем модальное окно подтверждения
+    setShowConfirmModal(true);
+  };
 
+  const handleConfirmReplace = async () => {
+    setShowConfirmModal(false);
     setReplacing(true);
     setError(null);
     setReplaceResults([]);
@@ -160,10 +163,6 @@ export function FindReplaceModal({ isOpen, onClose, onComplete }: FindReplaceMod
     } finally {
       setReplacing(false);
     }
-  };
-
-  const handleReplaceAll = async () => {
-    await handleReplace();
   };
 
   if (!isOpen) return null;
@@ -405,6 +404,63 @@ export function FindReplaceModal({ isOpen, onClose, onComplete }: FindReplaceMod
           </button>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-orange-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">
+                  Подтверждение замены
+                </h3>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-4 space-y-3">
+              <p className="text-gray-700">
+                Вы уверены, что хотите заменить <strong className="text-red-600">"{findText}"</strong> на <strong className="text-green-600">"{replaceText}"</strong>?
+              </p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                <p className="text-sm text-yellow-800 font-medium">
+                  ⚠️ Это действие нельзя будет отменить!
+                </p>
+              </div>
+              <div className="text-sm text-gray-600">
+                <p>Область поиска: <strong>{
+                  searchField === 'all' ? 'Все поля' :
+                  searchField === 'title' ? 'Только названия' :
+                  'Только авторы'
+                }</strong></p>
+                {caseSensitive && <p>• С учетом регистра</p>}
+                {wholeWord && <p>• Только целые слова</p>}
+                {useRegex && <p>• Регулярное выражение</p>}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 font-medium"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleConfirmReplace}
+                className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 font-medium"
+              >
+                Да, заменить всё
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
