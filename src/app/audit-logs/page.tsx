@@ -58,6 +58,7 @@ export default function AuditLogsPage() {
     { value: '', label: 'Все типы' },
     { value: 'book', label: 'Книга' },
     { value: 'chapter', label: 'Глава' },
+    { value: 'block', label: 'Блок' },
     { value: 'word', label: 'Слово' },
     { value: 'user', label: 'Пользователь' }
   ];
