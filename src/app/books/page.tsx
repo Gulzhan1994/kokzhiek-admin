@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import ApiService from '@/lib/api';
 import Modal from '@/components/Modal';
+import { FindReplaceModal } from '@/components/FindReplaceModal';
 import useLanguage from '@/hooks/useLanguage';
 
 interface Book {
@@ -75,6 +76,9 @@ export default function BooksPage() {
   const [searchLogsQuery, setSearchLogsQuery] = useState('');
   const [searchLogsResults, setSearchLogsResults] = useState<any[]>([]);
   const [searchLogsLoading, setSearchLogsLoading] = useState(false);
+
+  // Для Find/Replace
+  const [findReplaceModalOpen, setFindReplaceModalOpen] = useState(false);
 
   const fetchBooks = useCallback(async (silentRefresh = false) => {
     try {
@@ -396,6 +400,15 @@ export default function BooksPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               Поиск в логах
+            </button>
+            <button
+              onClick={() => setFindReplaceModalOpen(true)}
+              className="bg-purple-600 text-white px-6 py-2 rounded-md hover:bg-purple-700 flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12M8 12h12M8 17h12M3 7h.01M3 12h.01M3 17h.01" />
+              </svg>
+              Найти и заменить
             </button>
           </div>
         </div>
@@ -1031,6 +1044,15 @@ export default function BooksPage() {
             </div>
           </div>
         )}
+
+        {/* Find/Replace Modal */}
+        <FindReplaceModal
+          isOpen={findReplaceModalOpen}
+          onClose={() => setFindReplaceModalOpen(false)}
+          onComplete={() => {
+            fetchBooks();
+          }}
+        />
       </div>
     </div>
   );
