@@ -5,7 +5,8 @@ import Link from 'next/link';
 import AuthWrapper, { useAuth } from '@/components/AuthWrapper';
 import ApiService from '@/lib/api';
 import StatsCard from '@/components/StatsCard';
-import { Key, CheckCircle, Building2, Users, TrendingUp, Calendar, Download, History } from 'lucide-react';
+import { AdminHistoryPanel } from '@/components/AdminHistoryPanel';
+import { Key, CheckCircle, Building2, Users, TrendingUp, Calendar, Download, History, Undo2 } from 'lucide-react';
 
 interface DashboardStats {
   totalKeys: number;
@@ -19,6 +20,7 @@ function AdminPanel() {
   const { logout } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -140,6 +142,13 @@ function AdminPanel() {
               <span>История изменений книг</span>
             </Link>
             <button
+              onClick={() => setHistoryPanelOpen(true)}
+              className="flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md text-orange-700 bg-orange-50 hover:bg-orange-100 transition-colors"
+            >
+              <Undo2 className="w-5 h-5" />
+              <span>История действий (Undo/Redo)</span>
+            </button>
+            <button
               onClick={handleExportData}
               className="flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-50 hover:bg-gray-100 transition-colors"
             >
@@ -149,6 +158,16 @@ function AdminPanel() {
           </div>
         </div>
       </div>
+
+      {/* Admin History Panel */}
+      <AdminHistoryPanel
+        isOpen={historyPanelOpen}
+        onClose={() => setHistoryPanelOpen(false)}
+        onActionUndone={() => {
+          // Обновляем статистику после отмены действия
+          fetchStats();
+        }}
+      />
     </div>
   );
 }
