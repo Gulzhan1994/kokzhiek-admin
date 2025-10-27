@@ -10,7 +10,7 @@ interface StatsCardProps {
     value: number;
     isPositive: boolean;
   };
-  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'orange';
+  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'orange' | 'gray' | 'indigo' | 'pink';
 }
 
 const StatsCard: React.FC<StatsCardProps> = ({
@@ -27,7 +27,10 @@ const StatsCard: React.FC<StatsCardProps> = ({
     yellow: 'bg-yellow-50 text-yellow-600 border-yellow-200',
     red: 'bg-red-50 text-red-600 border-red-200',
     purple: 'bg-purple-50 text-purple-600 border-purple-200',
-    orange: 'bg-orange-50 text-orange-600 border-orange-200'
+    orange: 'bg-orange-50 text-orange-600 border-orange-200',
+    gray: 'bg-gray-50 text-gray-600 border-gray-200',
+    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-200',
+    pink: 'bg-pink-50 text-pink-600 border-pink-200'
   };
 
   const iconColorClasses = {
@@ -36,7 +39,10 @@ const StatsCard: React.FC<StatsCardProps> = ({
     yellow: 'text-yellow-500',
     red: 'text-red-500',
     purple: 'text-purple-500',
-    orange: 'text-orange-500'
+    orange: 'text-orange-500',
+    gray: 'text-gray-500',
+    indigo: 'text-indigo-500',
+    pink: 'text-pink-500'
   };
 
   return (

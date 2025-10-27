@@ -7,14 +7,18 @@ import ApiService from '@/lib/api';
 import StatsCard from '@/components/StatsCard';
 import { AdminHistoryPanel } from '@/components/AdminHistoryPanel';
 import { ExportProgressModal } from '@/components/ExportProgressModal';
-import { Key, CheckCircle, Building2, Users, TrendingUp, Calendar, Download, History, Undo2 } from 'lucide-react';
+import { Key, CheckCircle, Building2, Users, TrendingUp, Calendar, Download, History, Undo2, BookOpen, UserCheck, GraduationCap } from 'lucide-react';
 
 interface DashboardStats {
   totalKeys: number;
   usedKeys: number;
+  availableKeys: number;
   totalSchools: number;
   totalUsers: number;
   activeUsers: number;
+  totalTeachers: number;
+  totalStudents: number;
+  totalBooks: number;
 }
 
 function AdminPanel() {
@@ -157,33 +161,62 @@ function AdminPanel() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatsCard
-            title="Всего ключей"
-            value={stats?.totalKeys || 0}
-            icon={Key}
-            color="blue"
-          />
-          <StatsCard
-            title="Использованных"
-            value={stats?.usedKeys || 0}
-            icon={CheckCircle}
-            color="green"
-          />
-          <StatsCard
-            title="Школ"
-            value={stats?.totalSchools || 0}
-            icon={Building2}
-            color="purple"
-          />
-          <StatsCard
-            title="Пользователей"
-            value={stats?.totalUsers || 0}
-            subtitle={`Активных: ${stats?.activeUsers || 0}`}
-            icon={Users}
-            color="orange"
-          />
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatsCard
+              title="Всего ключей"
+              value={stats?.totalKeys || 0}
+              icon={Key}
+              color="blue"
+            />
+            <StatsCard
+              title="Использованных"
+              value={stats?.usedKeys || 0}
+              icon={CheckCircle}
+              color="green"
+            />
+            <StatsCard
+              title="Доступных ключей"
+              value={stats?.availableKeys || 0}
+              icon={Key}
+              color="gray"
+            />
+            <StatsCard
+              title="Школ"
+              value={stats?.totalSchools || 0}
+              icon={Building2}
+              color="purple"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatsCard
+              title="Пользователей"
+              value={stats?.totalUsers || 0}
+              subtitle={`Активных: ${stats?.activeUsers || 0}`}
+              icon={Users}
+              color="orange"
+            />
+            <StatsCard
+              title="Учителей"
+              value={stats?.totalTeachers || 0}
+              icon={UserCheck}
+              color="indigo"
+            />
+            <StatsCard
+              title="Учеников"
+              value={stats?.totalStudents || 0}
+              icon={GraduationCap}
+              color="pink"
+            />
+            <StatsCard
+              title="Книг"
+              value={stats?.totalBooks || 0}
+              icon={BookOpen}
+              color="yellow"
+            />
+          </div>
+        </>
       )}
 
       {/* Quick Actions */}
