@@ -6,6 +6,7 @@ import ApiService from '@/lib/api';
 import Modal from '@/components/Modal';
 import { FindReplaceModal } from '@/components/FindReplaceModal';
 import useLanguage from '@/hooks/useLanguage';
+import AuthWrapper from '@/components/AuthWrapper';
 
 interface Book {
   id: string;
@@ -44,7 +45,7 @@ interface BooksResponse {
   };
 }
 
-export default function BooksPage() {
+function BooksContent() {
   const { t } = useLanguage();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1055,5 +1056,13 @@ export default function BooksPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function BooksPage() {
+  return (
+    <AuthWrapper>
+      <BooksContent />
+    </AuthWrapper>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import ApiService from '@/lib/api';
+import AuthWrapper from '@/components/AuthWrapper';
 
 interface SearchResult {
   type: 'book' | 'chapter' | 'block';
@@ -28,7 +29,7 @@ interface SearchResults {
   total: number;
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResults | null>(null);
   const [loading, setLoading] = useState(false);
@@ -324,5 +325,13 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <AuthWrapper>
+      <SearchContent />
+    </AuthWrapper>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ApiService from '@/lib/api';
+import AuthWrapper from '@/components/AuthWrapper';
 
 interface AuditLog {
   id: string;
@@ -41,7 +42,7 @@ interface AuditLogsData {
   filters: any;
 }
 
-export default function AuditLogsPage() {
+function AuditLogsContent() {
   const [data, setData] = useState<AuditLogsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -372,5 +373,13 @@ export default function AuditLogsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuditLogsPage() {
+  return (
+    <AuthWrapper>
+      <AuditLogsContent />
+    </AuthWrapper>
   );
 }
