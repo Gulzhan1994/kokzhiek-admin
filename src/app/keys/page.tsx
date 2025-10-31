@@ -278,24 +278,46 @@ function KeysManagement() {
   };
 
   const exportKeys = () => {
-    const csvContent = [
-      ['Название', 'Организация', 'Разрешения', 'Статус', 'Создан', 'Истекает', 'Использований'].join(','),
-      ...filteredKeys.map(key => [
-        key.name,
-        key.organizationName || '-',
-        key.permissions.join(';'),
-        key.isActive ? 'Активен' : 'Неактивен',
-        new Date(key.createdAt).toLocaleDateString('ru-RU'),
-        key.expiresAt ? new Date(key.expiresAt).toLocaleDateString('ru-RU') : 'Никогда',
-        key.usageCount
-      ].join(','))
-    ].join('\n');
+    // Use semicolon as delimiter for Excel compatibility
+    const delimiter = ';';
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    // Start with UTF-8 BOM for Excel compatibility
+    let csvContent = '\uFEFF';
+
+    // Add separator declaration for Excel
+    csvContent += `sep=${delimiter}\n`;
+
+    // Add headers
+    csvContent += ['Название', 'Организация', 'Разрешения', 'Статус', 'Создан', 'Истекает', 'Использований'].join(delimiter) + '\n';
+
+    // Add data rows
+    csvContent += filteredKeys.map(key => {
+      const escapeValue = (val: string | number) => {
+        const stringVal = String(val);
+        // Check if value needs quoting (contains delimiter, quote, or newline)
+        if (stringVal.includes(delimiter) || stringVal.includes('"') || stringVal.includes('\n') || stringVal.includes('\r')) {
+          // Escape quotes by doubling them
+          return `"${stringVal.replace(/"/g, '""').replace(/\n/g, ' ').replace(/\r/g, '')}"`;
+        }
+        return stringVal;
+      };
+
+      return [
+        escapeValue(key.name),
+        escapeValue(key.organizationName || '-'),
+        escapeValue(key.permissions.join(', ')),
+        escapeValue(key.isActive ? 'Да' : 'Нет'),
+        escapeValue(new Date(key.createdAt).toLocaleDateString('ru-RU')),
+        escapeValue(key.expiresAt ? new Date(key.expiresAt).toLocaleDateString('ru-RU') : 'Никогда'),
+        escapeValue(key.usageCount)
+      ].join(delimiter);
+    }).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv; charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `api-keys-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `registration-keys-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
     toast.success('Данные экспортированы');
