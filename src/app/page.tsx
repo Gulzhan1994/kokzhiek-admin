@@ -103,8 +103,8 @@ function AdminPanel() {
 
       setExportProgress({ isExporting: true, progress: 95, status: 'Создание файла...' });
 
-      // Combine chunks into blob
-      const blob = new Blob(chunks as BlobPart[]);
+      // Combine chunks into blob with UTF-8 encoding
+      const blob = new Blob(chunks as BlobPart[], { type: 'text/csv; charset=utf-8' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
