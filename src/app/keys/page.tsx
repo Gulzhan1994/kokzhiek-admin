@@ -281,11 +281,8 @@ function KeysManagement() {
     // Use semicolon as delimiter for Excel compatibility
     const delimiter = ';';
 
-    // Start with UTF-8 BOM for Excel compatibility
-    let csvContent = '\uFEFF';
-
-    // Add separator declaration for Excel
-    csvContent += `sep=${delimiter}\n`;
+    // Build CSV content WITHOUT BOM first
+    let csvContent = `sep=${delimiter}\n`;
 
     // Add headers
     csvContent += ['Название', 'Организация', 'Разрешения', 'Статус', 'Создан', 'Истекает', 'Использований'].join(delimiter) + '\n';
@@ -313,7 +310,19 @@ function KeysManagement() {
       ].join(delimiter);
     }).join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv; charset=utf-8' });
+    // Create UTF-8 BOM as byte array
+    const BOM = new Uint8Array([0xEF, 0xBB, 0xBF]);
+
+    // Encode content as UTF-8
+    const encoder = new TextEncoder();
+    const contentBytes = encoder.encode(csvContent);
+
+    // Combine BOM + content
+    const combined = new Uint8Array(BOM.length + contentBytes.length);
+    combined.set(BOM, 0);
+    combined.set(contentBytes, BOM.length);
+
+    const blob = new Blob([combined], { type: 'text/csv; charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
