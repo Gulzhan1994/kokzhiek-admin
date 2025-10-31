@@ -80,6 +80,8 @@ function BooksContent() {
 
   // Для Find/Replace
   const [findReplaceModalOpen, setFindReplaceModalOpen] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportingHtml, setExportingHtml] = useState(false);
 
   const fetchBooks = useCallback(async (silentRefresh = false) => {
     try {
@@ -303,6 +305,88 @@ function BooksContent() {
       showModal('Ошибка', 'Не удалось выполнить поиск', 'error');
     } finally {
       setSearchLogsLoading(false);
+    }
+  };
+
+  // Обработчик экспорта книги в PDF
+  const handleExportBookPdf = async (bookId: string, bookTitle: string) => {
+    try {
+      setExportingPdf(true);
+      const token = localStorage.getItem('admin_token');
+
+      if (!token) {
+        showModal('Ошибка', 'Необходима авторизация', 'error');
+        return;
+      }
+
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+      const response = await fetch(`${backendUrl}/api/admin/books/${bookId}/export/pdf`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка экспорта книги в PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${bookTitle}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      showModal('Успех', 'Книга успешно экспортирована в PDF', 'success');
+    } catch (error) {
+      console.error('Error exporting book to PDF:', error);
+      showModal('Ошибка', 'Не удалось экспортировать книгу в PDF', 'error');
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
+  // Обработчик экспорта книги в HTML
+  const handleExportBookHtml = async (bookId: string, bookTitle: string) => {
+    try {
+      setExportingHtml(true);
+      const token = localStorage.getItem('admin_token');
+
+      if (!token) {
+        showModal('Ошибка', 'Необходима авторизация', 'error');
+        return;
+      }
+
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+      const response = await fetch(`${backendUrl}/api/admin/books/${bookId}/export/html`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка экспорта книги в HTML');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${bookTitle}_${new Date().toISOString().split('T')[0]}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      showModal('Успех', 'Книга успешно экспортирована в HTML', 'success');
+    } catch (error) {
+      console.error('Error exporting book to HTML:', error);
+      showModal('Ошибка', 'Не удалось экспортировать книгу в HTML', 'error');
+    } finally {
+      setExportingHtml(false);
     }
   };
 
@@ -905,6 +989,33 @@ function BooksContent() {
                         </div>
                       )}
                     </div>
+                  </div>
+                </div>
+
+                {/* Кнопки экспорта */}
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-3">Экспорт книги</h3>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleExportBookPdf(selectedBook.id, selectedBook.title)}
+                      disabled={exportingPdf}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      <span>{exportingPdf ? 'Экспорт...' : 'Экспорт в PDF'}</span>
+                    </button>
+                    <button
+                      onClick={() => handleExportBookHtml(selectedBook.id, selectedBook.title)}
+                      disabled={exportingHtml}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
+                      <span>{exportingHtml ? 'Экспорт...' : 'Экспорт в HTML'}</span>
+                    </button>
                   </div>
                 </div>
 
