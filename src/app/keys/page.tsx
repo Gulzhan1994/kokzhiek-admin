@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Download, Copy, Eye, EyeOff, Trash2, X } from 'lucide-react';
+import { Plus, Search, Download, Copy, Eye, EyeOff, Trash2, X, CheckCircle, XCircle, Clock } from 'lucide-react';
 import AuthWrapper, { useAuth } from '@/components/AuthWrapper';
 import ApiService from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -10,6 +10,7 @@ interface ApiKey {
   id: string;
   name: string;
   key: string;
+  keyPrefix?: string;
   organizationId?: string;
   organizationName?: string;
   permissions: string[];
@@ -17,6 +18,7 @@ interface ApiKey {
   createdAt: string;
   expiresAt: string | null;
   usageCount: number;
+  maxUses?: number;
   lastUsedAt?: string | null;
 }
 
@@ -47,6 +49,7 @@ function KeysManagement() {
     permissions: [] as string[],
     expiresAt: '',
     count: 1,
+    keyPrefix: '',
   });
 
   useEffect(() => {
@@ -68,13 +71,15 @@ function KeysManagement() {
           id: key.id,
           name: key.description || `Ключ ${key.role}`,
           key: key.keyCode,
+          keyPrefix: key.keyPrefix,
           organizationId: key.organizationId,
           organizationName: key.organizationName,
           permissions: [key.role], // role as permission
           isActive: key.isActive && key.status === 'active',
           createdAt: key.createdAt || new Date().toISOString(),
           expiresAt: key.expiresAt,
-          usageCount: key.currentUses || 0,
+          usageCount: key.currentUses || key.usedCount || 0,
+          maxUses: key.maxUses,
           lastUsedAt: key.lastUsedAt || null,
         })) || [];
 
@@ -206,6 +211,7 @@ function KeysManagement() {
           description: newKeyForm.name,
           maxUses: 1,
           expiresAt: expiresAtISO,
+          keyPrefix: newKeyForm.keyPrefix || undefined,
         });
 
         if (result.success && result.data?.keys) {
@@ -227,6 +233,7 @@ function KeysManagement() {
             permissions: [],
             expiresAt: '',
             count: 1,
+            keyPrefix: '',
           });
           setCreationMode('single');
           await loadApiKeys();
@@ -240,6 +247,7 @@ function KeysManagement() {
           description: newKeyForm.name,
           maxUses: 1, // Default to single use
           expiresAt: expiresAtISO,
+          keyPrefix: newKeyForm.keyPrefix || undefined,
         });
 
         if (result.success && result.data?.keyInfo) {
@@ -259,6 +267,7 @@ function KeysManagement() {
             permissions: [],
             expiresAt: '',
             count: 1,
+            keyPrefix: '',
           });
           await loadApiKeys();
         } else {
@@ -371,48 +380,106 @@ function KeysManagement() {
     });
   };
 
-  const getStatusBadge = (isActive: boolean, expiresAt: string | null) => {
+  const getStatusIcon = (apiKey: ApiKey) => {
     const now = new Date();
-    const isExpired = expiresAt && new Date(expiresAt) < now;
+    const expiresAt = apiKey.expiresAt ? new Date(apiKey.expiresAt) : null;
 
-    if (!isActive) {
-      return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">Неактивен</span>;
+    if (!apiKey.isActive) {
+      return <XCircle className="w-4 h-4 text-gray-500" />;
     }
-    if (isExpired) {
-      return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-600">Истек</span>;
+
+    if (expiresAt && expiresAt < now) {
+      return <Clock className="w-4 h-4 text-red-500" />;
     }
-    return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-600">Активен</span>;
+
+    if (apiKey.maxUses && apiKey.usageCount >= apiKey.maxUses) {
+      return <XCircle className="w-4 h-4 text-orange-500" />;
+    }
+
+    return <CheckCircle className="w-4 h-4 text-green-500" />;
+  };
+
+  const getStatusText = (apiKey: ApiKey): { text: string; color: string } => {
+    const now = new Date();
+    const expiresAt = apiKey.expiresAt ? new Date(apiKey.expiresAt) : null;
+
+    if (!apiKey.isActive) {
+      return { text: 'Неактивен', color: 'text-gray-600' };
+    }
+
+    if (expiresAt && expiresAt < now) {
+      return { text: 'Истек', color: 'text-red-600' };
+    }
+
+    if (apiKey.maxUses && apiKey.usageCount >= apiKey.maxUses) {
+      return { text: 'Исчерпан', color: 'text-orange-600' };
+    }
+
+    return { text: 'Активен', color: 'text-green-600' };
+  };
+
+  const getRoleBadgeColor = (role: string) => {
+    const colors: Record<string, string> = {
+      admin: 'bg-red-100 text-red-800',
+      author: 'bg-purple-100 text-purple-800',
+      teacher: 'bg-blue-100 text-blue-800',
+      student: 'bg-green-100 text-green-800',
+      school: 'bg-yellow-100 text-yellow-800',
+      moderator: 'bg-orange-100 text-orange-800',
+    };
+    return colors[role] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getRoleDisplayName = (role: string) => {
+    const roleMap: Record<string, string> = {
+      admin: 'Администратор',
+      author: 'Автор',
+      teacher: 'Учитель',
+      student: 'Ученик',
+      school: 'Школа',
+      moderator: 'Модератор',
+    };
+    return roleMap[role] || 'Ученик';
   };
 
   const getPermissionBadges = (permissions: string[]) => {
-    const colorMap: Record<string, string> = {
-      admin: 'bg-purple-100 text-purple-700',
-      moderator: 'bg-blue-100 text-blue-700',
-      author: 'bg-green-100 text-green-700',
-      school: 'bg-yellow-100 text-yellow-700',
-      teacher: 'bg-orange-100 text-orange-700',
-      student: 'bg-gray-100 text-gray-700',
-    };
-
-    const labelMap: Record<string, string> = {
-      admin: 'Администратор',
-      moderator: 'Модератор',
-      author: 'Автор',
-      school: 'Школа',
-      teacher: 'Учитель',
-      student: 'Ученик',
-    };
-
     return (
-      <div className="flex gap-1 flex-wrap">
-        {permissions.map(permission => (
+      <div className="flex flex-wrap gap-1">
+        {permissions.map((permission, index) => (
           <span
-            key={permission}
-            className={`px-2 py-0.5 text-xs font-medium rounded ${colorMap[permission] || 'bg-gray-100 text-gray-700'}`}
+            key={index}
+            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(permission)}`}
           >
-            {labelMap[permission] || permission}
+            {getRoleDisplayName(permission)}
           </span>
         ))}
+      </div>
+    );
+  };
+
+  const getStatusBadge = (isActive: boolean, expiresAt: string | null) => {
+    const now = new Date();
+    const expiration = expiresAt ? new Date(expiresAt) : null;
+    const isExpired = expiration && expiration < now;
+
+    let statusText = 'Активен';
+    let statusColor = 'text-green-600';
+    let icon = <CheckCircle className="w-4 h-4 text-green-500" />;
+
+    if (!isActive) {
+      statusText = 'Неактивен';
+      statusColor = 'text-gray-600';
+      icon = <XCircle className="w-4 h-4 text-gray-500" />;
+    } else if (isExpired) {
+      statusText = 'Истек';
+      statusColor = 'text-red-600';
+      icon = <Clock className="w-4 h-4 text-red-500" />;
+    }
+
+    return (
+      <div className="flex items-center space-x-1">
+        {icon}
+        <span className={`text-sm ${statusColor}`}>{statusText}</span>
       </div>
     );
   };
@@ -680,6 +747,7 @@ function KeysManagement() {
                     permissions: [],
                     expiresAt: '',
                     count: 1,
+                    keyPrefix: '',
                   });
                   setCreationMode('single');
                 }}
@@ -790,6 +858,19 @@ function KeysManagement() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Префикс ключа <span className="text-gray-400 text-xs">(опционально)</span>
+                </label>
+                <input
+                  type="text"
+                  value={newKeyForm.keyPrefix}
+                  onChange={(e) => setNewKeyForm({ ...newKeyForm, keyPrefix: e.target.value.toUpperCase() })}
+                  placeholder="например: SUMMER2024"
+                  maxLength={10}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-sm text-blue-800">
                   💡 {creationMode === 'bulk'
@@ -808,6 +889,7 @@ function KeysManagement() {
                     permissions: [],
                     expiresAt: '',
                     count: 1,
+                    keyPrefix: '',
                   });
                   setCreationMode('single');
                 }}

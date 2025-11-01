@@ -110,10 +110,10 @@ export const KeysTable: React.FC<KeysTableProps> = ({
               Роль
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Описание
+              Префикс
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Использований
+              Количество пользователей
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Статус
@@ -150,11 +150,11 @@ export const KeysTable: React.FC<KeysTableProps> = ({
                     {getRoleDisplayName(key.role)}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-900">
-                  {key.description}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {key.keyPrefix || '-'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {key.maxUses || '∞'}
+                  {key.usedCount || 0}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center space-x-1">

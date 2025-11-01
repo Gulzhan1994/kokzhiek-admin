@@ -21,7 +21,8 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
     role: 'student',
     description: '',
     maxUses: undefined,
-    expiresAt: undefined
+    expiresAt: undefined,
+    prefix: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,7 +33,8 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
       const submitData = {
         ...formData,
         maxUses: formData.maxUses || undefined,
-        expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : undefined
+        expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : undefined,
+        prefix: formData.prefix || undefined
       };
       await onSubmit(submitData);
       onClose();
@@ -40,7 +42,8 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
         role: 'student',
         description: '',
         maxUses: undefined,
-        expiresAt: undefined
+        expiresAt: undefined,
+        prefix: ''
       });
     } catch (error) {
       // Error handling is managed by parent component
@@ -83,6 +86,23 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                 <option value="school">Школа</option>
                 <option value="moderator">Модератор</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Префикс
+              </label>
+              <input
+                type="text"
+                value={formData.prefix || ''}
+                onChange={(e) => setFormData({ ...formData, prefix: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Например: SCHOOL2024"
+                maxLength={20}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Необязательное поле. Добавляется в начало ключа для удобства идентификации
+              </p>
             </div>
 
             <div>

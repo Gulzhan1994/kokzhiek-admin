@@ -8,6 +8,7 @@ export interface RegistrationKey {
   expiresAt?: string;
   createdAt: string;
   createdBy: string;
+  keyPrefix?: string;
   status?: KeyStatus;
   usedBy?: Array<{
     userId: string;
@@ -22,6 +23,7 @@ export interface CreateKeyData {
   description: string;
   maxUses?: number;
   expiresAt?: string;
+  prefix?: string;
 }
 
 export interface BulkCreateData {
