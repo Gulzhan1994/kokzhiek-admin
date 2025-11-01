@@ -278,11 +278,11 @@ function KeysManagement() {
   };
 
   const exportKeys = () => {
-    // Use semicolon as delimiter for Excel compatibility
-    const delimiter = ';';
+    // Use tab as delimiter for Excel compatibility
+    const delimiter = '\t';
 
-    // Build CSV content WITHOUT BOM first
-    let csvContent = `sep=${delimiter}\n`;
+    // Build CSV content
+    let csvContent = '';
 
     // Add headers
     csvContent += ['Название', 'Организация', 'Разрешения', 'Статус', 'Создан', 'Истекает', 'Использований'].join(delimiter) + '\n';
@@ -291,12 +291,8 @@ function KeysManagement() {
     csvContent += filteredKeys.map(key => {
       const escapeValue = (val: string | number) => {
         const stringVal = String(val);
-        // Check if value needs quoting (contains delimiter, quote, or newline)
-        if (stringVal.includes(delimiter) || stringVal.includes('"') || stringVal.includes('\n') || stringVal.includes('\r')) {
-          // Escape quotes by doubling them
-          return `"${stringVal.replace(/"/g, '""').replace(/\n/g, ' ').replace(/\r/g, '')}"`;
-        }
-        return stringVal;
+        // For tab-delimited, we need to escape tabs and newlines
+        return stringVal.replace(/\t/g, ' ').replace(/\n/g, ' ').replace(/\r/g, '');
       };
 
       return [
@@ -310,19 +306,24 @@ function KeysManagement() {
       ].join(delimiter);
     }).join('\n');
 
-    // Create UTF-8 BOM as byte array
-    const BOM = new Uint8Array([0xEF, 0xBB, 0xBF]);
+    // Create UTF-16LE BOM (0xFF, 0xFE)
+    const BOM = new Uint8Array([0xFF, 0xFE]);
 
-    // Encode content as UTF-8
-    const encoder = new TextEncoder();
-    const contentBytes = encoder.encode(csvContent);
+    // Encode content as UTF-16LE
+    const utf16Content = new Uint16Array(csvContent.length);
+    for (let i = 0; i < csvContent.length; i++) {
+      utf16Content[i] = csvContent.charCodeAt(i);
+    }
+
+    // Convert to bytes (little-endian)
+    const contentBytes = new Uint8Array(utf16Content.buffer);
 
     // Combine BOM + content
     const combined = new Uint8Array(BOM.length + contentBytes.length);
     combined.set(BOM, 0);
     combined.set(contentBytes, BOM.length);
 
-    const blob = new Blob([combined], { type: 'text/csv; charset=utf-8' });
+    const blob = new Blob([combined], { type: 'text/csv; charset=utf-16le' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
