@@ -592,25 +592,22 @@ function KeysManagement() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Название
+                    Код ключа
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ключ
+                    Роль
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Организация
+                    Префикс
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Разрешения
+                    Количество пользователей
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Статус
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Использований
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Истекает
+                    Срок действия
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Действия
@@ -621,47 +618,33 @@ function KeysManagement() {
                 {filteredKeys.map((apiKey) => (
                   <tr key={apiKey.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{apiKey.name}</div>
-                      <div className="text-xs text-gray-500">{formatDate(apiKey.createdAt)}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
                         <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-                          {visibleKeys.has(apiKey.id) ? apiKey.key : maskApiKey(apiKey.key)}
+                          {apiKey.key}
                         </code>
                         <button
-                          onClick={() => toggleKeyVisibility(apiKey.id)}
-                          className="text-gray-500 hover:text-gray-700"
-                        >
-                          {visibleKeys.has(apiKey.id) ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                        <button
                           onClick={() => copyToClipboard(apiKey.key, apiKey.name)}
-                          className="text-gray-500 hover:text-gray-700"
+                          className="text-gray-400 hover:text-gray-600"
+                          title="Копировать ключ"
                         >
                           <Copy className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{apiKey.organizationName || '-'}</div>
-                    </td>
-                    <td className="px-6 py-4">
                       {getPermissionBadges(apiKey.permissions)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {apiKey.keyPrefix || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {apiKey.usageCount || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(apiKey.isActive, apiKey.expiresAt)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{apiKey.usageCount.toLocaleString()}</div>
-                      {apiKey.lastUsedAt && (
-                        <div className="text-xs text-gray-500">{formatDate(apiKey.lastUsedAt)}</div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {apiKey.expiresAt ? formatDate(apiKey.expiresAt) : 'Никогда'}
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {apiKey.expiresAt ? formatDate(apiKey.expiresAt) : 'Бессрочно'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
@@ -700,8 +683,11 @@ function KeysManagement() {
             </div>
             <div className="p-6">
               <p className="text-gray-700 mb-4">
-                Вы уверены, что хотите удалить ключ <strong>"{selectedKey.name}"</strong>?
+                Вы уверены, что хотите удалить ключ?
               </p>
+              <code className="block text-sm font-mono bg-gray-100 px-3 py-2 rounded mb-4">
+                {selectedKey.key}
+              </code>
               <p className="text-sm text-gray-500">
                 Это действие необратимо. Все приложения, использующие этот ключ, перестанут работать.
               </p>
