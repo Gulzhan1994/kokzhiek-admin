@@ -137,6 +137,7 @@ class ApiService {
     description?: string;
     maxUses?: number;
     expiresAt?: string;
+    keyPrefix?: string;
   }) {
     const response = await this.makeRequest('/api/admin/registration-keys', {
       method: 'POST',
