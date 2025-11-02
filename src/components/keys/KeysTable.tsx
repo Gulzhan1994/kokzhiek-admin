@@ -154,7 +154,7 @@ export const KeysTable: React.FC<KeysTableProps> = ({
                   {key.keyPrefix || '-'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {key.currentUses || 0}
+                  {key.maxUses || '∞'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center space-x-1">
