@@ -24,6 +24,8 @@ export interface CreateKeyData {
   maxUses?: number;
   expiresAt?: string;
   prefix?: string;
+  schoolId?: string;
+  teacherId?: string;
 }
 
 export interface BulkCreateData {
