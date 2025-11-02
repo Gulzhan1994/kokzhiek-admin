@@ -81,7 +81,7 @@ export const KeyDetailsModal: React.FC<KeyDetailsModalProps> = ({
   const getStatus = () => {
     if (!keyDetails) return '';
 
-    // Используем поле status из API если оно есть
+    // ВСЕГДА используем поле status из API (бэкенд правильно его вычисляет)
     if (keyDetails.status) {
       const statusMap = {
         'active': 'Активен',
@@ -92,7 +92,8 @@ export const KeyDetailsModal: React.FC<KeyDetailsModalProps> = ({
       return statusMap[keyDetails.status as keyof typeof statusMap] || keyDetails.status;
     }
 
-    // Fallback логика если нет поля status
+    // Fallback: если по какой-то причине нет status, вычисляем сами
+    // Используем ту же логику что и в бэкенде (registrationKeyService.ts:formatKeyInfo)
     const now = new Date();
     const expiresAt = keyDetails.expiresAt ? new Date(keyDetails.expiresAt) : null;
 
@@ -170,11 +171,33 @@ export const KeyDetailsModal: React.FC<KeyDetailsModalProps> = ({
               </div>
 
               <div>
+                <p className="text-sm text-gray-600">Префикс</p>
+                <p className="font-semibold">{keyDetails.keyPrefix || '-'}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-600">Использований</p>
+                <p className="font-semibold">
+                  {keyDetails.usedCount || 0}
+                  {keyDetails.maxUses ? ` / ${keyDetails.maxUses}` : ' / ∞'}
+                </p>
+              </div>
+
+              <div>
                 <p className="text-sm text-gray-600">Срок действия</p>
                 <p className="font-semibold">
                   {keyDetails.expiresAt
                     ? formatDate(keyDetails.expiresAt)
                     : 'Бессрочно'}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-600">Создан</p>
+                <p className="font-semibold">
+                  {keyDetails.createdAt
+                    ? formatDate(keyDetails.createdAt)
+                    : '-'}
                 </p>
               </div>
 

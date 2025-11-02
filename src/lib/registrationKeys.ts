@@ -128,7 +128,8 @@ export const getKeyDetails = async (keyCode: string): Promise<RegistrationKey | 
   try {
     const response = await ApiService.getRegistrationKey(keyCode);
 
-    const key = response.data?.data || response.data;
+    // Backend returns: { success: true, data: { keyInfo: {...} } }
+    const key = response.data?.keyInfo || response.data?.data || response.data;
 
     return key;
   } catch (error: any) {

@@ -7,6 +7,7 @@ import { CreateKeyModal } from './CreateKeyModal';
 import { BulkCreateModal } from './BulkCreateModal';
 import { KeyDetailsModal } from './KeyDetailsModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
+import { ExportProgressModal } from '../ExportProgressModal';
 import {
   getRegistrationKeys,
   createRegistrationKey,
@@ -15,8 +16,11 @@ import {
 } from '@/lib/registrationKeys';
 import type { RegistrationKey, KeyStatus } from '@/types/registrationKey';
 import { toast } from 'react-hot-toast';
+import ApiService from '@/lib/api';
+import { useAuth } from '../AuthWrapper';
 
 export const RegistrationKeysPage: React.FC = () => {
+  const { logout } = useAuth();
   const [keys, setKeys] = useState<RegistrationKey[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -31,6 +35,11 @@ export const RegistrationKeysPage: React.FC = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedKeyCode, setSelectedKeyCode] = useState<string | null>(null);
   const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
+  const [exportProgress, setExportProgress] = useState<{
+    isExporting: boolean;
+    progress: number;
+    status: string;
+  }>({ isExporting: false, progress: 0, status: '' });
 
   const loadKeys = useCallback(async () => {
     setLoading(true);
@@ -103,47 +112,96 @@ export const RegistrationKeysPage: React.FC = () => {
     setDetailsModalOpen(true);
   };
 
-  const handleExport = () => {
-    const csvContent = [
-      [
-        'Код ключа',
-        'Роль',
-        'Описание',
-        'Использований',
-        'Статус',
-        'Срок действия'
-      ],
-      ...keys.map(key => {
-        const now = new Date();
-        const expiresAt = key.expiresAt ? new Date(key.expiresAt) : null;
-        let status = 'Активен';
+  const handleExport = async () => {
+    try {
+      setExportProgress({ isExporting: true, progress: 0, status: 'Подготовка экспорта...' });
 
-        if (!key.isActive) {
-          status = 'Неактивен';
-        } else if (expiresAt && expiresAt < now) {
-          status = 'Истёк';
-        } else if (key.maxUses && key.usedCount >= key.maxUses) {
-          status = 'Исчерпан';
+      const response = await ApiService.exportData('csv', 'keys');
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Ошибка экспорта: ${response.status} ${response.statusText}`);
+      }
+
+      // Get content length for progress calculation
+      const contentLength = response.headers.get('content-length');
+      const total = contentLength ? parseInt(contentLength, 10) : 0;
+
+      setExportProgress({ isExporting: true, progress: 10, status: 'Загрузка данных...' });
+
+      // Read response as stream to track progress
+      const reader = response.body?.getReader();
+      const chunks: Uint8Array[] = [];
+      let receivedLength = 0;
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) break;
+
+          chunks.push(value);
+          receivedLength += value.length;
+
+          // Calculate progress (reserve last 10% for file creation)
+          const downloadProgress = total > 0
+            ? Math.min(90, Math.floor((receivedLength / total) * 90))
+            : Math.min(90, 10 + Math.floor(receivedLength / 10000));
+
+          setExportProgress({
+            isExporting: true,
+            progress: downloadProgress,
+            status: `Загружено ${(receivedLength / 1024 / 1024).toFixed(2)} МБ...`
+          });
         }
+      }
 
-        return [
-          key.keyCode || '',
-          key.role || '',
-          key.description || '',
-          key.maxUses?.toString() || '∞',
-          status,
-          key.expiresAt ? new Date(key.expiresAt).toLocaleDateString() : 'Бессрочно'
-        ];
-      })
-    ].map(row => row.join(',')).join('\n');
+      setExportProgress({ isExporting: true, progress: 95, status: 'Создание файла...' });
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `keys-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+      // Combine chunks into blob with UTF-8 encoding
+      const blob = new Blob(chunks as BlobPart[], { type: 'text/csv; charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `registration_keys_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+
+      setExportProgress({ isExporting: true, progress: 100, status: 'Экспорт завершен!' });
+
+      // Clean up
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setExportProgress({ isExporting: false, progress: 0, status: '' });
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error exporting data:', error);
+
+      let errorMessage = 'Ошибка при экспорте данных';
+
+      if (error instanceof Error) {
+        if (error.message === 'Authentication required') {
+          logout();
+          return;
+        }
+        errorMessage = error.message;
+      }
+
+      // Показать ошибку в модальном окне на 3 секунды
+      setExportProgress({
+        isExporting: true,
+        progress: 0,
+        status: `❌ ${errorMessage}`
+      });
+
+      setTimeout(() => {
+        setExportProgress({ isExporting: false, progress: 0, status: '' });
+        toast.error(errorMessage);
+      }, 3000);
+    }
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -310,6 +368,13 @@ export const RegistrationKeysPage: React.FC = () => {
           setKeyToDelete(null);
         }}
         onConfirm={confirmDelete}
+      />
+
+      <ExportProgressModal
+        isOpen={exportProgress.isExporting}
+        progress={exportProgress.progress}
+        status={exportProgress.status}
+        onClose={() => setExportProgress({ isExporting: false, progress: 0, status: '' })}
       />
     </div>
   );

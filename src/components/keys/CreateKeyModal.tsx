@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import type { CreateKeyData } from '@/types/registrationKey';
 import { SpellCheckInput } from '../SpellCheckInput';
@@ -74,21 +74,7 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
     }
   };
 
-  // Load schools when modal opens or when role requires it
-  useEffect(() => {
-    if (isOpen && (formData.role === 'teacher' || formData.role === 'student')) {
-      fetchSchools();
-    }
-  }, [isOpen, formData.role]);
-
-  // Load teachers when school is selected for student role
-  useEffect(() => {
-    if (isOpen && formData.role === 'student' && formData.schoolId) {
-      fetchTeachers(formData.schoolId);
-    }
-  }, [isOpen, formData.role, formData.schoolId]);
-
-  const fetchSchools = async () => {
+  const fetchSchools = useCallback(async () => {
     setLoadingSchools(true);
     try {
       const token = localStorage.getItem('token');
@@ -106,9 +92,9 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
     } finally {
       setLoadingSchools(false);
     }
-  };
+  }, []);
 
-  const fetchTeachers = async (schoolId: string) => {
+  const fetchTeachers = useCallback(async (schoolId: string) => {
     setLoadingTeachers(true);
     try {
       const token = localStorage.getItem('token');
@@ -126,7 +112,21 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
     } finally {
       setLoadingTeachers(false);
     }
-  };
+  }, []);
+
+  // Load schools when modal opens or when role requires it
+  useEffect(() => {
+    if (isOpen && (formData.role === 'teacher' || formData.role === 'student')) {
+      fetchSchools();
+    }
+  }, [isOpen, formData.role, fetchSchools]);
+
+  // Load teachers when school is selected for student role
+  useEffect(() => {
+    if (isOpen && formData.role === 'student' && formData.schoolId) {
+      fetchTeachers(formData.schoolId);
+    }
+  }, [isOpen, formData.role, formData.schoolId, fetchTeachers]);
 
   if (!isOpen) return null;
 
