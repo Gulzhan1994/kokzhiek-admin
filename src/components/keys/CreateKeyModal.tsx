@@ -38,7 +38,7 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
     description: '',
     maxUses: undefined,
     expiresAt: undefined,
-    prefix: '',
+    keyPrefix: '',
     schoolId: undefined,
     teacherId: undefined
   });
@@ -52,7 +52,7 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
         ...formData,
         maxUses: formData.maxUses || undefined,
         expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : undefined,
-        prefix: formData.prefix || undefined,
+        keyPrefix: formData.keyPrefix || undefined,
         schoolId: formData.schoolId || undefined,
         teacherId: formData.teacherId || undefined
       };
@@ -63,7 +63,7 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
         description: '',
         maxUses: undefined,
         expiresAt: undefined,
-        prefix: '',
+        keyPrefix: '',
         schoolId: undefined,
         teacherId: undefined
       });
@@ -170,8 +170,8 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
               </label>
               <input
                 type="text"
-                value={formData.prefix || ''}
-                onChange={(e) => setFormData({ ...formData, prefix: e.target.value })}
+                value={formData.keyPrefix || ''}
+                onChange={(e) => setFormData({ ...formData, keyPrefix: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Например: SCHOOL2024"
                 maxLength={20}

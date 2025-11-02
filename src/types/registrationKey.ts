@@ -23,7 +23,7 @@ export interface CreateKeyData {
   description: string;
   maxUses?: number;
   expiresAt?: string;
-  prefix?: string;
+  keyPrefix?: string;
   schoolId?: string;
   teacherId?: string;
 }
@@ -35,6 +35,8 @@ export interface BulkCreateData {
   maxUses?: number;
   expiresAt?: string;
   keyPrefix?: string;
+  schoolId?: string;
+  teacherId?: string;
 }
 
 export interface KeysResponse {
