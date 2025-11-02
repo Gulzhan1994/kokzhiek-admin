@@ -25,7 +25,7 @@ const getStatusIcon = (key: RegistrationKey) => {
     return <Clock className="w-4 h-4 text-red-500" />;
   }
 
-  if (key.maxUses && key.usedCount >= key.maxUses) {
+  if (key.maxUses && key.currentUses >= key.maxUses) {
     return <XCircle className="w-4 h-4 text-orange-500" />;
   }
 
@@ -44,7 +44,7 @@ const getStatusText = (key: RegistrationKey): { text: string; color: string } =>
     return { text: 'Истёк', color: 'text-red-600' };
   }
 
-  if (key.maxUses && key.usedCount >= key.maxUses) {
+  if (key.maxUses && key.currentUses >= key.maxUses) {
     return { text: 'Исчерпан', color: 'text-orange-600' };
   }
 
@@ -154,7 +154,7 @@ export const KeysTable: React.FC<KeysTableProps> = ({
                   {key.keyPrefix || '-'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {key.usedCount || 0}
+                  {key.currentUses || 0}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center space-x-1">

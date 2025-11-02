@@ -178,7 +178,7 @@ export const KeyDetailsModal: React.FC<KeyDetailsModalProps> = ({
               <div>
                 <p className="text-sm text-gray-600">Использований</p>
                 <p className="font-semibold">
-                  {keyDetails.usedCount || 0}
+                  {keyDetails.currentUses || 0}
                   {keyDetails.maxUses ? ` / ${keyDetails.maxUses}` : ' / ∞'}
                 </p>
               </div>

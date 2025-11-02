@@ -2,7 +2,7 @@ export interface RegistrationKey {
   keyCode: string;
   role: 'student' | 'teacher' | 'author' | 'admin' | 'school' | 'moderator';
   description: string;
-  usedCount: number;
+  currentUses: number;
   maxUses?: number;
   isActive: boolean;
   expiresAt?: string;
