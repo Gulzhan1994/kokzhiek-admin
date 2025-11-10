@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { X } from 'lucide-react';
-import type { CreateKeyData } from '@/types/registrationKey';
-import { SpellCheckInput } from '../SpellCheckInput';
+import React, { useState, useEffect, useCallback } from "react";
+import { X } from "lucide-react";
+import type { CreateKeyData } from "@/types/registrationKey";
+import { SpellCheckInput } from "../SpellCheckInput";
 
 interface School {
   id: string;
@@ -26,7 +26,7 @@ interface CreateKeyModalProps {
 export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
   isOpen,
   onClose,
-  onSubmit
+  onSubmit,
 }) => {
   const [loading, setLoading] = useState(false);
   const [schools, setSchools] = useState<School[]>([]);
@@ -34,13 +34,13 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
   const [loadingSchools, setLoadingSchools] = useState(false);
   const [loadingTeachers, setLoadingTeachers] = useState(false);
   const [formData, setFormData] = useState<CreateKeyData>({
-    role: 'student',
-    description: '',
+    role: "student",
+    description: "",
     maxUses: undefined,
     expiresAt: undefined,
-    keyPrefix: '',
+    keyPrefix: "",
     schoolId: undefined,
-    teacherId: undefined
+    teacherId: undefined,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,21 +51,23 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
       const submitData = {
         ...formData,
         maxUses: formData.maxUses || undefined,
-        expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : undefined,
+        expiresAt: formData.expiresAt
+          ? new Date(formData.expiresAt).toISOString()
+          : undefined,
         keyPrefix: formData.keyPrefix || undefined,
         schoolId: formData.schoolId || undefined,
-        teacherId: formData.teacherId || undefined
+        teacherId: formData.teacherId || undefined,
       };
       await onSubmit(submitData);
       onClose();
       setFormData({
-        role: 'student',
-        description: '',
+        role: "student",
+        description: "",
         maxUses: undefined,
         expiresAt: undefined,
-        keyPrefix: '',
+        keyPrefix: "",
         schoolId: undefined,
-        teacherId: undefined
+        teacherId: undefined,
       });
     } catch (error) {
       // Error handling is managed by parent component
@@ -77,18 +79,18 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
   const fetchSchools = useCallback(async () => {
     setLoadingSchools(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/admin/schools', {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:3000/api/admin/schools", {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       const data = await response.json();
       if (data.success) {
         setSchools(data.data.schools);
       }
     } catch (error) {
-      console.error('Failed to load schools:', error);
+      console.error("Failed to load schools:", error);
     } finally {
       setLoadingSchools(false);
     }
@@ -97,18 +99,21 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
   const fetchTeachers = useCallback(async (schoolId: string) => {
     setLoadingTeachers(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/admin/teachers?schoolId=${schoolId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `http://localhost:3000/api/admin/teachers?schoolId=${schoolId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
       const data = await response.json();
       if (data.success) {
         setTeachers(data.data.teachers);
       }
     } catch (error) {
-      console.error('Failed to load teachers:', error);
+      console.error("Failed to load teachers:", error);
     } finally {
       setLoadingTeachers(false);
     }
@@ -116,14 +121,17 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
 
   // Load schools when modal opens or when role requires it
   useEffect(() => {
-    if (isOpen && (formData.role === 'teacher' || formData.role === 'student')) {
+    if (
+      isOpen &&
+      (formData.role === "teacher" || formData.role === "student")
+    ) {
       fetchSchools();
     }
   }, [isOpen, formData.role, fetchSchools]);
 
   // Load teachers when school is selected for student role
   useEffect(() => {
-    if (isOpen && formData.role === 'student' && formData.schoolId) {
+    if (isOpen && formData.role === "student" && formData.schoolId) {
       fetchTeachers(formData.schoolId);
     }
   }, [isOpen, formData.role, formData.schoolId, fetchTeachers]);
@@ -151,7 +159,9 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
               </label>
               <select
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                onChange={(e) =>
+                  setFormData({ ...formData, role: e.target.value as any })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
@@ -170,54 +180,67 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
               </label>
               <input
                 type="text"
-                value={formData.keyPrefix || ''}
-                onChange={(e) => setFormData({ ...formData, keyPrefix: e.target.value })}
+                value={formData.keyPrefix || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, keyPrefix: e.target.value })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Например: SCHOOL2024"
                 maxLength={20}
               />
               <p className="mt-1 text-xs text-gray-500">
-                Необязательное поле. Добавляется в начало ключа для удобства идентификации
+                Необязательное поле. Добавляется в начало ключа для удобства
+                идентификации
               </p>
             </div>
 
-            {(formData.role === 'teacher' || formData.role === 'student') && (
+            {(formData.role === "teacher" || formData.role === "student") && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Школа <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={formData.schoolId || ''}
-                  onChange={(e) => setFormData({ ...formData, schoolId: e.target.value, teacherId: undefined })}
+                  value={formData.schoolId || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      schoolId: e.target.value,
+                      teacherId: undefined,
+                    })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                   disabled={loadingSchools}
                 >
                   <option value="">Выберите школу</option>
-                  {schools.map(school => (
+                  {schools.map((school) => (
                     <option key={school.id} value={school.id}>
                       {school.name}
                     </option>
                   ))}
                 </select>
-                {loadingSchools && <p className="mt-1 text-xs text-gray-500">Загрузка школ...</p>}
+                {loadingSchools && (
+                  <p className="mt-1 text-xs text-gray-500">Загрузка школ...</p>
+                )}
               </div>
             )}
 
-            {formData.role === 'student' && formData.schoolId && (
+            {formData.role === "student" && formData.schoolId && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Учитель <span className="text-red-500">*</span>
                 </label>
                 <select
-                  value={formData.teacherId || ''}
-                  onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
+                  value={formData.teacherId || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, teacherId: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                   disabled={loadingTeachers}
                 >
                   <option value="">Выберите учителя</option>
-                  {teachers.map(teacher => (
+                  {teachers.map((teacher) => (
                     <option key={teacher.id} value={teacher.id}>
                       {teacher.firstName && teacher.lastName
                         ? `${teacher.lastName} ${teacher.firstName}`
@@ -225,7 +248,11 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
                     </option>
                   ))}
                 </select>
-                {loadingTeachers && <p className="mt-1 text-xs text-gray-500">Загрузка учителей...</p>}
+                {loadingTeachers && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Загрузка учителей...
+                  </p>
+                )}
               </div>
             )}
 
@@ -233,7 +260,9 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
               <SpellCheckInput
                 label="Описание"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 placeholder="Например: Ключ для 10А класса"
                 required
                 lang="ru"
@@ -246,8 +275,15 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
               </label>
               <input
                 type="number"
-                value={formData.maxUses || ''}
-                onChange={(e) => setFormData({ ...formData, maxUses: e.target.value ? parseInt(e.target.value) : undefined })}
+                value={formData.maxUses || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const num = parseInt(value, 10);
+                  setFormData({
+                    ...formData,
+                    maxUses: isNaN(num) ? undefined : num,
+                  });
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Без ограничений"
                 min="1"
@@ -260,8 +296,10 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
               </label>
               <input
                 type="datetime-local"
-                value={formData.expiresAt || ''}
-                onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                value={formData.expiresAt || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, expiresAt: e.target.value })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 min={new Date().toISOString().slice(0, 16)}
               />
@@ -282,7 +320,7 @@ export const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
               disabled={loading || !formData.description}
               className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md disabled:opacity-50"
             >
-              {loading ? 'Создание...' : 'Создать'}
+              {loading ? "Создание..." : "Создать"}
             </button>
           </div>
         </form>
