@@ -26,6 +26,8 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initialize the ApiService to load token from localStorage
+    ApiService.init();
     // Check if user is already logged in
     const token = ApiService.getToken();
     if (token) {

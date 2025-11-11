@@ -20,26 +20,13 @@ const BACKEND_URL = getBackendUrl();
 // Temporary simple auth - in production should use proper JWT handling
 class ApiService {
   private static token: string | null = null;
+  private static initialized = false;
 
-  // Универсальный метод для API вызовов с проверкой backend URL
-  private static async apiCall(endpoint: string, options: RequestInit = {}): Promise<Response> {
-    if (!BACKEND_URL) {
-      throw new Error('Backend не настроен. Обратитесь к администратору.');
+  static init() {
+    if (typeof window !== 'undefined' && !this.initialized) {
+      this.token = localStorage.getItem('admin_token');
+      this.initialized = true;
     }
-
-    const url = `${BACKEND_URL}${endpoint}`;
-    const defaultHeaders = {
-      'Content-Type': 'application/json',
-      ...(this.token && { 'Authorization': `Bearer ${this.token}` }),
-    };
-
-    return fetch(url, {
-      ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-    });
   }
 
   static async login(email: string, password: string): Promise<{ success: boolean; token?: string; error?: string }> {
@@ -64,6 +51,7 @@ class ApiService {
 
       if (data.success && data.data?.token) {
         this.token = data.data.token;
+        this.initialized = true;
         // Store in localStorage for persistence
         if (typeof window !== 'undefined') {
           localStorage.setItem('admin_token', data.data.token);
@@ -78,24 +66,25 @@ class ApiService {
   }
 
   static getToken(): string | null {
-    if (this.token) return this.token;
-
-    // Try to get from localStorage
-    if (typeof window !== 'undefined') {
-      this.token = localStorage.getItem('admin_token');
+    if (!this.initialized) {
+      this.init();
     }
-
     return this.token;
   }
 
   static logout() {
     this.token = null;
+    this.initialized = false;
     if (typeof window !== 'undefined') {
       localStorage.removeItem('admin_token');
     }
   }
 
   private static async makeRequest(endpoint: string, options: RequestInit = {}) {
+    if (!BACKEND_URL) {
+      throw new Error('Backend не настроен. Обратитесь к администратору.');
+    }
+    
     const token = this.getToken();
 
     const config: RequestInit = {
@@ -227,21 +216,15 @@ class ApiService {
 
   // Export Data API
   static async exportData(format: 'csv' | 'json' | 'xlsx' = 'csv', dataType: 'all' | 'keys' | 'schools' | 'users' = 'all') {
-    const token = this.getToken();
     // Если запрошен XLSX, запрашиваем JSON у бэкенда для последующей обработки на фронтенде
     const requestFormat = format === 'xlsx' ? 'json' : format;
     const params = new URLSearchParams({ format: requestFormat, data: dataType });
 
-    const response = await fetch(`${BACKEND_URL}/api/admin/export?${params}`, {
-      headers: {
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-      },
+    const response = await this.makeRequest(`/api/admin/export?${params}`, {
+        headers: {
+            // 'Content-Type' is not needed for this GET request, makeRequest will add it, but it's harmless
+        }
     });
-
-    if (response.status === 401) {
-      this.logout();
-      throw new Error('Authentication required');
-    }
 
     if (!response.ok) {
       throw new Error('Export failed');
@@ -310,18 +293,14 @@ class ApiService {
     if (params.startDate) searchParams.append('startDate', params.startDate);
     if (params.endDate) searchParams.append('endDate', params.endDate);
 
-    const token = this.getToken();
     const query = searchParams.toString();
-    const response = await fetch(`${BACKEND_URL}/api/audit/export${query ? `?${query}` : ''}`, {
-      headers: {
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-      },
+    const endpoint = `/api/audit/export${query ? `?${query}` : ''}`;
+    
+    const response = await this.makeRequest(endpoint, {
+        headers: {
+            // 'Content-Type' is not needed for this GET request
+        }
     });
-
-    if (response.status === 401) {
-      this.logout();
-      throw new Error('Authentication required');
-    }
 
     if (!response.ok) {
       throw new Error('Export failed');
