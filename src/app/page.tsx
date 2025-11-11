@@ -151,14 +151,55 @@ function AdminPanel() {
           throw new Error('Полученные данные не являются массивом для экспорта.');
         }
 
-        // Локализация заголовков (пример, нужно будет расширить для всех типов данных)
+        // Локализация заголовков (расширенный список для всех типов данных)
         const localizedHeaders: { [key: string]: string } = {
+          // Общие поля
           id: 'ID',
+          createdAt: 'Дата создания',
+          updatedAt: 'Дата обновления',
+
+          // Поля для ключей регистрации
+          keyCode: 'Код ключа',
+          role: 'Роль',
+          description: 'Описание',
+          maxUses: 'Макс. использований',
+          currentUses: 'Текущие использования',
+          expiresAt: 'Срок действия',
+          isActive: 'Активен',
+          createdBy: 'Создан',
+
+          // Поля для пользователей
           email: 'Email',
           firstName: 'Имя',
           lastName: 'Фамилия',
-          role: 'Роль',
-          createdAt: 'Дата создания',
+          status: 'Статус',
+          lastLogin: 'Последний вход',
+          schoolId: 'ID Школы',
+          schoolName: 'Название школы', // Если есть
+          teacherId: 'ID Учителя', // Если есть
+          teacherName: 'Имя учителя', // Если есть
+
+          // Поля для школ
+          name: 'Название школы',
+          address: 'Адрес',
+          city: 'Город',
+          contactEmail: 'Контактный Email',
+          contactPhone: 'Контактный телефон',
+          adminId: 'ID Администратора', // Если есть
+          adminName: 'Имя администратора', // Если есть
+
+          // Поля для книг (если экспортируются книги)
+          title: 'Название книги',
+          subject: 'Предмет',
+          grade: 'Класс',
+          language: 'Язык',
+          author: 'Автор',
+          publisher: 'Издательство',
+          year: 'Год издания',
+          isbn: 'ISBN',
+          description: 'Описание',
+          ownerId: 'ID Владельца',
+          isPublic: 'Публичная',
           // Добавьте другие заголовки по мере необходимости
         };
 
@@ -172,6 +213,7 @@ function AdminPanel() {
           }
           return newRow;
         });
+        console.log('DEBUG: wsData before json_to_sheet:', wsData); // Логируем wsData
 
         const ws = XLSX.utils.json_to_sheet(wsData);
         const wb = XLSX.utils.book_new();
