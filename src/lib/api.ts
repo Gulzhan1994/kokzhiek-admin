@@ -226,9 +226,11 @@ class ApiService {
   }
 
   // Export Data API
-  static async exportData(format: 'csv' | 'json' = 'csv', dataType: 'all' | 'keys' | 'schools' | 'users' = 'all') {
+  static async exportData(format: 'csv' | 'json' | 'xlsx' = 'csv', dataType: 'all' | 'keys' | 'schools' | 'users' = 'all') {
     const token = this.getToken();
-    const params = new URLSearchParams({ format, data: dataType });
+    // Если запрошен XLSX, запрашиваем JSON у бэкенда для последующей обработки на фронтенде
+    const requestFormat = format === 'xlsx' ? 'json' : format;
+    const params = new URLSearchParams({ format: requestFormat, data: dataType });
 
     const response = await fetch(`${BACKEND_URL}/api/admin/export?${params}`, {
       headers: {

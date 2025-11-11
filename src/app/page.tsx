@@ -8,6 +8,7 @@ import StatsCard from '@/components/StatsCard';
 import { AdminHistoryPanel } from '@/components/AdminHistoryPanel';
 import { ExportProgressModal } from '@/components/ExportProgressModal';
 import { Key, CheckCircle, Building2, Users, TrendingUp, Calendar, Download, History, Undo2, BookOpen, UserCheck, GraduationCap } from 'lucide-react';
+import * as XLSX from 'xlsx'; // Импортируем библиотеку xlsx
 
 interface DashboardStats {
   totalKeys: number;
@@ -31,6 +32,7 @@ function AdminPanel() {
     progress: number;
     status: string;
   }>({ isExporting: false, progress: 0, status: '' });
+  const [exportFormat, setExportFormat] = useState<'csv' | 'xlsx'>('csv'); // Состояние для выбора формата экспорта
 
   useEffect(() => {
     fetchStats();
@@ -61,66 +63,116 @@ function AdminPanel() {
     try {
       setExportProgress({ isExporting: true, progress: 0, status: 'Подготовка экспорта...' });
 
-      const response = await ApiService.exportData('csv', 'all');
+      const dataType = 'all'; // Пока экспортируем все данные
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Ошибка экспорта: ${response.status} ${response.statusText}`);
-      }
+      if (exportFormat === 'csv') {
+        const response = await ApiService.exportData('csv', dataType);
 
-      // Get content length for progress calculation
-      const contentLength = response.headers.get('content-length');
-      const total = contentLength ? parseInt(contentLength, 10) : 0;
-
-      setExportProgress({ isExporting: true, progress: 10, status: 'Загрузка данных...' });
-
-      // Read response as stream to track progress
-      const reader = response.body?.getReader();
-      const chunks: Uint8Array[] = [];
-      let receivedLength = 0;
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-
-          if (done) break;
-
-          chunks.push(value);
-          receivedLength += value.length;
-
-          // Calculate progress (reserve last 10% for file creation)
-          const downloadProgress = total > 0
-            ? Math.min(90, Math.floor((receivedLength / total) * 90))
-            : Math.min(90, 10 + Math.floor(receivedLength / 10000));
-
-          setExportProgress({
-            isExporting: true,
-            progress: downloadProgress,
-            status: `Загружено ${(receivedLength / 1024 / 1024).toFixed(2)} МБ...`
-          });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Ошибка экспорта: ${response.status} ${response.statusText}`);
         }
+
+        // Get content length for progress calculation
+        const contentLength = response.headers.get('content-length');
+        const total = contentLength ? parseInt(contentLength, 10) : 0;
+
+        setExportProgress({ isExporting: true, progress: 10, status: 'Загрузка данных...' });
+
+        // Read response as stream to track progress
+        const reader = response.body?.getReader();
+        const chunks: Uint8Array[] = [];
+        let receivedLength = 0;
+
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) break;
+
+            chunks.push(value);
+            receivedLength += value.length;
+
+            // Calculate progress (reserve last 10% for file creation)
+            const downloadProgress = total > 0
+              ? Math.min(90, Math.floor((receivedLength / total) * 90))
+              : Math.min(90, 10 + Math.floor(receivedLength / 10000));
+
+            setExportProgress({
+              isExporting: true,
+              progress: downloadProgress,
+              status: `Загружено ${(receivedLength / 1024 / 1024).toFixed(2)} МБ...`
+            });
+          }
+        }
+
+        setExportProgress({ isExporting: true, progress: 95, status: 'Создание файла...' });
+
+        // Combine chunks into blob with UTF-8 encoding
+        const blob = new Blob(chunks as BlobPart[], { type: 'text/csv; charset=utf-8' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `kokzhiek_export_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+
+        setExportProgress({ isExporting: true, progress: 100, status: 'Экспорт завершен!' });
+
+        // Clean up
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          setExportProgress({ isExporting: false, progress: 0, status: '' });
+        }, 2000);
+
+      } else if (exportFormat === 'xlsx') {
+        // Логика для экспорта в XLSX
+        const response = await ApiService.exportData('xlsx', dataType); // Запрашиваем JSON
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Ошибка экспорта: ${response.status} ${response.statusText}`);
+        }
+
+        setExportProgress({ isExporting: true, progress: 50, status: 'Обработка данных...' });
+
+        const data = await response.json(); // Получаем JSON данные
+
+        // Локализация заголовков (пример, нужно будет расширить для всех типов данных)
+        const localizedHeaders: { [key: string]: string } = {
+          id: 'ID',
+          email: 'Email',
+          firstName: 'Имя',
+          lastName: 'Фамилия',
+          role: 'Роль',
+          createdAt: 'Дата создания',
+          // Добавьте другие заголовки по мере необходимости
+        };
+
+        // Преобразование данных для XLSX с локализованными заголовками
+        const wsData = data.map((row: any) => {
+          const newRow: any = {};
+          for (const key in row) {
+            if (Object.prototype.hasOwnProperty.call(row, key)) {
+              newRow[localizedHeaders[key] || key] = row[key];
+            }
+          }
+          return newRow;
+        });
+
+        const ws = XLSX.utils.json_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Данные');
+        XLSX.writeFile(wb, `kokzhiek_export_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+        setExportProgress({ isExporting: true, progress: 100, status: 'Экспорт завершен!' });
+
+        setTimeout(() => {
+          setExportProgress({ isExporting: false, progress: 0, status: '' });
+        }, 2000);
       }
-
-      setExportProgress({ isExporting: true, progress: 95, status: 'Создание файла...' });
-
-      // Combine chunks into blob with UTF-8 encoding
-      const blob = new Blob(chunks as BlobPart[], { type: 'text/csv; charset=utf-8' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `kokzhiek_export_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-
-      setExportProgress({ isExporting: true, progress: 100, status: 'Экспорт завершен!' });
-
-      // Clean up
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        setExportProgress({ isExporting: false, progress: 0, status: '' });
-      }, 2000);
 
     } catch (error) {
       console.error('Error exporting data:', error);
@@ -247,20 +299,35 @@ function AdminPanel() {
               <History className="w-5 h-5" />
               <span>История изменений</span>
             </Link>
-            <button
-              onClick={() => setHistoryPanelOpen(true)}
-              className="flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md text-orange-700 bg-orange-50 hover:bg-orange-100 transition-colors"
-            >
-              <Undo2 className="w-5 h-5" />
-              <span>История действий (Undo/Redo)</span>
-            </button>
-            <button
-              onClick={handleExportData}
-              className="flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-50 hover:bg-gray-100 transition-colors"
-            >
-              <Download className="w-5 h-5" />
-              <span>Экспорт данных</span>
-            </button>
+            <div className="flex flex-col gap-2"> {/* Обертка для кнопок экспорта */}
+              <button
+                onClick={() => setHistoryPanelOpen(true)}
+                className="flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md text-orange-700 bg-orange-50 hover:bg-orange-100 transition-colors"
+              >
+                <Undo2 className="w-5 h-5" />
+                <span>История действий (Undo/Redo)</span>
+              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setExportFormat('csv'); handleExportData(); }}
+                  className={`flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md ${
+                    exportFormat === 'csv' ? 'bg-blue-600 text-white' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'
+                  } transition-colors`}
+                >
+                  <Download className="w-5 h-5" />
+                  <span>Экспорт CSV</span>
+                </button>
+                <button
+                  onClick={() => { setExportFormat('xlsx'); handleExportData(); }}
+                  className={`flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md ${
+                    exportFormat === 'xlsx' ? 'bg-green-600 text-white' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'
+                  } transition-colors`}
+                >
+                  <Download className="w-5 h-5" />
+                  <span>Экспорт XLSX</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
