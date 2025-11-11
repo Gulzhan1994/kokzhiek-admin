@@ -360,26 +360,13 @@ function AdminPanel() {
                 <Undo2 className="w-5 h-5" />
                 <span>История действий (Undo/Redo)</span>
               </button>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => { setExportFormat('csv'); handleExportData(); }}
-                  className={`flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md ${
-                    exportFormat === 'csv' ? 'bg-blue-600 text-white' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'
-                  } transition-colors`}
-                >
-                  <Download className="w-5 h-5" />
-                  <span>Экспорт CSV</span>
-                </button>
-                <button
-                  onClick={() => { setExportFormat('xlsx'); handleExportData(); }}
-                  className={`flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md ${
-                    exportFormat === 'xlsx' ? 'bg-green-600 text-white' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'
-                  } transition-colors`}
-                >
-                  <Download className="w-5 h-5" />
-                  <span>Экспорт XLSX</span>
-                </button>
-              </div>
+              <button
+                onClick={() => { setExportFormat('csv'); handleExportData(); }} // Default to CSV for now
+                className="flex items-center justify-center space-x-2 px-4 py-3 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+              >
+                <Download className="w-5 h-5" />
+                <span>Экспорт данных</span>
+              </button>
             </div>
           </div>
         </div>
