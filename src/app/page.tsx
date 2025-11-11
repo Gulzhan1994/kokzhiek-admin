@@ -138,7 +138,18 @@ function AdminPanel() {
 
         setExportProgress({ isExporting: true, progress: 50, status: 'Обработка данных...' });
 
-        const data = await response.json(); // Получаем JSON данные
+        const rawData = await response.json(); // Получаем JSON данные
+        let dataToExport = rawData;
+
+        // Если данные приходят в виде объекта с полем 'data' или 'items', извлекаем массив
+        if (rawData && typeof rawData === 'object' && (rawData.data || rawData.items)) {
+          dataToExport = rawData.data || rawData.items;
+        }
+
+        // Убедимся, что dataToExport является массивом
+        if (!Array.isArray(dataToExport)) {
+          throw new Error('Полученные данные не являются массивом для экспорта.');
+        }
 
         // Локализация заголовков (пример, нужно будет расширить для всех типов данных)
         const localizedHeaders: { [key: string]: string } = {
@@ -152,7 +163,7 @@ function AdminPanel() {
         };
 
         // Преобразование данных для XLSX с локализованными заголовками
-        const wsData = data.map((row: any) => {
+        const wsData = dataToExport.map((row: any) => {
           const newRow: any = {};
           for (const key in row) {
             if (Object.prototype.hasOwnProperty.call(row, key)) {
